@@ -141,88 +141,70 @@ function App() {
   }).length;
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="dashboard-container">
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div className="header-container">
         <h2>Wherewolf - Master Dashboard</h2>
-        <div style={{ display: 'flex', gap: '15px' }}>
-          <button onClick={() => setGameStarted(!gameStarted)} style={{ backgroundColor: gameStarted ? '#e74c3c' : '#2ecc71', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+        <div className="button-group">
+          <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
             {gameStarted ? 'Ferma Partita' : 'Avvia Partita'}
           </button>
-          <button onClick={resetAllVotes} style={{ backgroundColor: '#f39c12', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Nuovo Giorno
-          </button>
-          <button onClick={resetEntireGame} style={{ backgroundColor: '#8e44ad', color: 'white', padding: '10px 15px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Nuova Partita
-          </button>
-          <a 
-            href="/Regolamento WhereWolf.pdf" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            style={{ backgroundColor: '#3498db', color: 'white', padding: '10px 15px', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold' }}
-          >
-            Manuale
-          </a>
+          <button className="btn btn-day" onClick={resetAllVotes}>Nuovo Giorno</button>
+          <button className="btn btn-danger" onClick={resetEntireGame}>Nuova Partita</button>
+          <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">Manuale</a>
         </div>
       </div>
 
       {victoryStatus && (
-        <div style={{ backgroundColor: victoryStatus.winner === 'Villaggio' ? '#d4edda' : '#f8d7da', color: victoryStatus.winner === 'Villaggio' ? '#155724' : '#721c24', padding: '20px', borderRadius: '8px', textAlign: 'center', marginBottom: '20px', border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#c3e6cb' : '#f5c6cb'}` }}>
-          <h2 style={{ margin: '0 0 10px 0' }}>VITTORIA: {victoryStatus.winner.toUpperCase()}!</h2>
-          <p style={{ margin: 0, fontSize: '18px' }}>{victoryStatus.message}</p>
+        <div style={{ backgroundColor: victoryStatus.winner === 'Villaggio' ? '#1e4620' : '#4a1515', padding: '20px', borderRadius: '8px', textAlign: 'center', marginBottom: '20px', border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}` }}>
+          <h2 style={{ margin: '0 0 10px 0', color: 'white' }}>VITTORIA: {victoryStatus.winner.toUpperCase()}!</h2>
+          <p style={{ margin: 0, fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
         </div>
       )}
 
       {!gameStarted && (
-        <div style={{ background: '#f5f5f5', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
-          <h3>Aggiungi Giocatori alla Stanza</h3>
-          <form onSubmit={handleMasterAdd} style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <input type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ padding: '8px', width: '200px' }}/>
-            
-            {/* Input con ricerca automatica (Datalist HTML5) */}
-            <input 
-              list="role-suggestions" 
-              placeholder="Cerca ruolo..." 
-              value={masterRole} 
-              onChange={(e) => setMasterRole(e.target.value)} 
-              style={{ padding: '8px', width: '250px' }}
-              required 
-            />
-            <datalist id="role-suggestions">
-              {sortedRoles.map(r => <option key={r} value={r} />)}
-            </datalist>
-
-            <button type="submit" style={{ padding: '8px 15px', cursor: 'pointer' }}>➕ Aggiungi</button>
+        <div className="form-container">
+          <h3 style={{ marginTop: 0, color: '#ecf0f1' }}>Aggiungi Giocatori alla Stanza</h3>
+          <form className="add-form" onSubmit={handleMasterAdd}>
+            <input className="dark-input" type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ flex: 1 }}/>
+            <input className="dark-input" list="role-suggestions" placeholder="Cerca ruolo..." value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
+            <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
+            <button type="submit" className="btn btn-link" style={{ flex: '0 0 auto' }}>Aggiungi</button>
           </form>
         </div>
       )}
 
-      <div style={{ overflowX: 'auto' }}>
-        <table border="1" cellPadding="8" style={{ borderCollapse: 'collapse', width: '100%', textAlign: 'center', background: 'white' }}>
+      <div className="mobile-stats">
+        <div style={{ color: '#f39c12', marginBottom: '5px' }}>
+          <strong>Voti Giorno Totali:</strong> {totalDayVotes} / {aliveCount}
+        </div>
+        <div style={{ color: '#e74c3c' }}>
+          <strong>Voti Ballottaggio Totali:</strong> {totalBallotVotes} / {eligibleBallotVotersCount}
+        </div>
+      </div>
+
+      <div className="table-wrapper">
+        <table className="game-table">
+          <colgroup>
+            <col style={{ width: '12%' }} /> 
+            <col style={{ width: '13%' }} /> 
+            <col style={{ width: '7%' }} />  
+            <col style={{ width: '14%' }} /> 
+            <col style={{ width: '18%' }} /> 
+            <col style={{ width: '12%' }} /> 
+            <col style={{ width: '12%' }} /> 
+            <col style={{ width: '6%' }} />  
+            <col style={{ width: '6%' }} />  
+          </colgroup>
           <thead>
-            <tr style={{ backgroundColor: '#2c3e50', color: 'white' }}>
+            <tr>
               <th style={{ textAlign: 'left' }}>Nome</th>
               <th>Ruolo</th>
               <th>Mistico</th>
               <th>Fazione & Aura</th>
               <th>Note Notturne</th>
-              
-              {/* Contatore Votazione */}
-              <th>
-                Voti<br/>
-                <span style={{ fontSize: '0.8em', color: '#f39c12' }}>
-                  ({totalDayVotes} / {aliveCount})
-                </span>
-              </th>
-              
-              {/* Contatore Ballottaggio */}
-              <th style={{ backgroundColor: '#c0392b' }}>
-                Ballottaggio <br/>
-                <span style={{ fontSize: '0.8em', color: '#fdf3e7' }}>
-                  ({totalBallotVotes} / {eligibleBallotVotersCount})
-                </span>
-              </th>
-              
+              <th>Voti<br/><span style={{ color: '#f39c12' }}>({totalDayVotes} / {aliveCount})</span></th>
+              <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio<br/><span style={{ color: '#fdf3e7' }}>({totalBallotVotes} / {eligibleBallotVotersCount})</span></th>
               <th>Stato</th>
               <th>Azioni</th>
             </tr>
@@ -231,83 +213,87 @@ function App() {
             {players.map((p) => {
               const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
               const isDead = p.status === 'morto';
-
+              
               let currentAura = roleInfo.aura;
               if (p.fazione === "Vampiro") currentAura = "Oscura";
               if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
+
+              const rowClass = isDead ? 'row-dead' : p.isBallot ? 'row-ballot' : 'row-alive';
               
               return (
-                <tr key={p.id} style={{ backgroundColor: isDead ? '#ffeaea' : p.isBallot ? '#fdf3e7' : 'white', opacity: isDead ? 0.7 : 1 }}>
+                <tr key={p.id} className={rowClass}>
                   
-                  <td style={{ textAlign: 'left' }}><strong>{p.name}</strong></td>
+                  <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold' }}>
+                    {p.name}
+                  </td>
                   
-                  {/* Nome Ruolo */}
-                  <td>{p.role}</td>
+                  <td data-label="Ruolo">
+                    {p.role}
+                  </td>
                   
-                  {/* Colonna Mistico*/}
-                  <td style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#8e44ad' : '#7f8c8d' }}>
+                  <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9b59b6' : '#7f8c8d' }}>
                     {roleInfo.misticismo || 'No'}
                   </td>
                   
-                  {/* Select Dinamica per Sovrascrivere la Fazione */}
-                  <td style={{ fontSize: '0.9em' }}>
-                    <select 
-                      value={p.fazione || roleInfo.fazione} 
-                      onChange={(e) => updateField(p.id, 'fazione', e.target.value)}
-                      style={{ padding: '2px', border: '1px solid #ccc', borderRadius: '4px', marginBottom: '5px', width: '130px' }}
-                    >
-                      {FAZIONI_POSSIBILI.map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                    <br/> <em>(Aura: {currentAura})</em>
+                  <td data-label="Fazione & Aura">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <select className="dark-input" style={{ width: '100%', maxWidth: '140px', padding: '4px', marginBottom: '4px' }} value={p.fazione || roleInfo.fazione} onChange={(e) => updateField(p.id, 'fazione', e.target.value)}>
+                        {FAZIONI_POSSIBILI.map(f => <option key={f} value={f}>{f}</option>)}
+                      </select>
+                      <span style={{ fontSize: '0.85em', color: '#aaa' }}>(Aura: {currentAura})</span>
+                    </div>
                   </td>
                   
-                  <td>
-                    <input type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '90%', padding: '5px', border: '1px solid #ccc' }} />
+                  <td data-label="Note Notturne">
+                    <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', maxWidth: '180px', padding: '6px' }} />
                   </td>
-
-                  <td>
+                  
+                  <td data-label="Voti Giorno">
                     {!isDead && (
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
-                        <span style={{ fontSize: '1.2em', fontWeight: 'bold', width: '20px' }}>{p.votes || 0}</span>
-                        <button onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
+                        <button className="action-btn" onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
+                        <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{p.votes || 0}</span>
+                        <button className="action-btn" onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
                       </div>
                     )}
                   </td>
-
-                  <td style={{ borderLeft: '2px solid #c0392b' }}>
+                  
+                  <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
                     {!isDead && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
-                        <label style={{ fontSize: '0.8em', cursor: 'pointer' }}>
-                          <input type="checkbox" checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} /> In Ballottaggio
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                        <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <input type="checkbox" checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
+                          In Ballottaggio
                         </label>
                         {p.isBallot && (
-                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '5px' }}>
-                             <button onClick={() => decrementVote(p.id, p.ballotVotes, 'ballotVotes')}>-</button>
-                             <span style={{ fontSize: '1.2em', fontWeight: 'bold', width: '20px', color: '#c0392b' }}>{p.ballotVotes || 0}</span>
-                             <button onClick={() => incrementVote(p.id, p.ballotVotes, 'ballotVotes')}>+</button>
+                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                             <button className="action-btn" onClick={() => decrementVote(p.id, p.ballotVotes, 'ballotVotes')}>-</button>
+                             <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center', color: '#e74c3c' }}>{p.ballotVotes || 0}</span>
+                             <button className="action-btn" onClick={() => incrementVote(p.id, p.ballotVotes, 'ballotVotes')}>+</button>
                            </div>
                         )}
                       </div>
                     )}
                   </td>
-
-                  <td style={{ color: isDead ? 'red' : 'green', fontWeight: 'bold', textTransform: 'uppercase' }}>{p.status}</td>
                   
-                  <td>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
+                  <td data-label="Stato" style={{ color: isDead ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>
+                    {p.status.toUpperCase()}
+                  </td>
+                  
+                  <td data-label="Azioni">
+                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
                       {gameStarted ? (
-                        <button onClick={() => toggleStatus(p.id, p.status)} style={{ cursor: 'pointer', background: 'transparent', border: 'none', fontSize: '1.2em' }} title={isDead ? "Resuscita" : "Uccidi"}>
+                        <button onClick={() => toggleStatus(p.id, p.status)} className="action-btn" title={isDead ? "Resuscita" : "Uccidi"}>
                           {isDead ? '💖' : '💀'}
                         </button>
                       ) : (
-                        <button onClick={() => removePlayer(p.id)} style={{ cursor: 'pointer', background: 'transparent', border: 'none', fontSize: '1.2em' }} title="Elimina Giocatore">
+                        <button onClick={() => removePlayer(p.id)} className="action-btn" style={{ borderColor: 'transparent', background: 'transparent' }} title="Elimina Giocatore">
                           🗑️
                         </button>
                       )}
                     </div>
                   </td>
-
+                  
                 </tr>
               );
             })}
