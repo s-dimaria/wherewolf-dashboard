@@ -176,10 +176,10 @@ function App() {
 
       <div className="mobile-stats">
         <div style={{ color: '#f39c12', marginBottom: '5px' }}>
-          <strong>Voti Giorno Totali:</strong> {totalDayVotes} / {aliveCount}
+          <strong>Voti Giorno Totali:</strong> {totalDayVotes}/{aliveCount}
         </div>
         <div style={{ color: '#e74c3c' }}>
-          <strong>Voti Ballottaggio Totali:</strong> {totalBallotVotes} / {eligibleBallotVotersCount}
+          <strong>Voti Ballottaggio Totali:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}
         </div>
       </div>
 
@@ -202,9 +202,9 @@ function App() {
               <th>Ruolo</th>
               <th>Mistico</th>
               <th>Fazione & Aura</th>
-              <th>Note Notturne</th>
-              <th>Voti<br/><span style={{ color: '#f39c12' }}>({totalDayVotes} / {aliveCount})</span></th>
-              <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio<br/><span style={{ color: '#fdf3e7' }}>({totalBallotVotes} / {eligibleBallotVotersCount})</span></th>
+              <th>Note</th>
+              <th>Voti<br/><span style={{ color: '#f39c12' }}>({totalDayVotes}/{aliveCount})</span></th>
+              <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio<br/><span style={{ color: '#fdf3e7' }}>({totalBallotVotes}/{eligibleBallotVotersCount})</span></th>
               <th>Stato</th>
               <th>Azioni</th>
             </tr>
@@ -244,11 +244,11 @@ function App() {
                     </div>
                   </td>
                   
-                  <td data-label="Note Notturne">
-                    <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', maxWidth: '180px', padding: '6px' }} />
+                  <td data-label="Note">
+                    <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', padding: '6px' }} />
                   </td>
                   
-                  <td data-label="Voti Giorno">
+                  <td data-label="Voti">
                     {!isDead && (
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                         <button className="action-btn" onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
@@ -263,7 +263,7 @@ function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
                         <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <input type="checkbox" checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
-                          In Ballottaggio
+                          Ballottante
                         </label>
                         {p.isBallot && (
                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>

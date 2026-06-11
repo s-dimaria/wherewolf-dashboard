@@ -66,6 +66,7 @@ body {
   border: 1px solid #444;
   padding: 10px;
   border-radius: 5px;
+  box-sizing: border-box;
 }
 
 .dark-input:focus { outline: 1px solid #3498db; }
@@ -197,7 +198,6 @@ body {
     text-transform: uppercase;
   }
 
-  /* Adatta gli input interni */
   .game-table td > input[type="text"],
   .game-table td > select {
     width: 100%;
