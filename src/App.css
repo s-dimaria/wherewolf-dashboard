@@ -111,13 +111,13 @@ body {
   text-align: center;
 }
 
-/* --- TABELLA --- */
+/* --- TABELLA RIGIDA --- */
 .table-wrapper {
   background: #1e1e1e;
   border-radius: 8px;
   border: 1px solid #333;
   box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  overflow: hidden; /* Taglia i bordi delle righe in animazione */
+  overflow: hidden; /* Evita sbavature delle animazioni */
 }
 
 .game-table {
@@ -140,7 +140,7 @@ body {
   padding: 15px 8px;
 }
 
-/* Colori Righe e Transizioni Soft */
+/* Colori Righe e Transizioni */
 .game-table tr {
   transition: background-color 0.4s ease, opacity 0.4s ease;
 }
@@ -148,15 +148,19 @@ body {
 .row-dead { background-color: #3a1515; opacity: 0.8; }
 .row-ballot { background-color: #4a3000; }
 
-/* --- BADGE STATO VIVO/MORTO --- */
+/* --- BADGE STATO (Centrati e flessibili) --- */
 .status-badge {
-  display: inline-block;
-  padding: 6px 10px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 8px;
   border-radius: 12px;
-  font-size: 0.85em;
+  font-size: 0.8em;
   font-weight: bold;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  min-width: 60px; /* Assicura che la larghezza non cambi tra VIVO e MORTO */
+  box-sizing: border-box;
 }
 .status-vivo { background-color: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); }
 .status-morto { background-color: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.4); }
@@ -165,7 +169,7 @@ body {
 .ballot-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centrato su Desktop */
+  align-items: center; /* Centrato orizzontalmente su Desktop */
   justify-content: center;
   gap: 8px;
   width: 100%;
@@ -183,7 +187,6 @@ body {
 }
 .action-btn:hover { background: #444; transform: scale(1.1); }
 .action-btn:active { transform: scale(0.95); }
-
 
 /* =========================================
    RESPONSIVE: SMARTPHONE (CARD LAYOUT)
@@ -261,7 +264,7 @@ body {
     max-width: 160px;
   }
 
-  /* Allinea a destra il blocco ballottaggio solo su Mobile */
+  /* Ri-allinea a destra il box ballottaggio solo su mobile */
   .ballot-wrapper {
     align-items: flex-end;
   }

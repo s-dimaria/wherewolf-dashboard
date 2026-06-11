@@ -24,7 +24,6 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  // --- MOTORE DI VITTORIA ---
   const checkVictory = () => {
     if (!gameStarted) return null;
 
@@ -65,7 +64,6 @@ function App() {
 
   const victoryStatus = checkVictory();
 
-  // --- FUNZIONI DI GIOCO ---
   const handleMasterAdd = async (e) => {
     e.preventDefault();
     if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) {
@@ -126,7 +124,6 @@ function App() {
 
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
 
-  // --- CALCOLATORI PER I VOTI ---
   const alivePlayersList = players.filter(p => p.status === 'vivo');
   const aliveCount = alivePlayersList.length;
 
@@ -186,13 +183,13 @@ function App() {
           <colgroup>
             <col style={{ width: '12%' }} /> 
             <col style={{ width: '13%' }} /> 
-            <col style={{ width: '7%' }} />  
-            <col style={{ width: '14%' }} /> 
-            <col style={{ width: '16%' }} /> {/* Adattata per il Badge Stato */}
-            <col style={{ width: '12%' }} /> 
-            <col style={{ width: '12%' }} /> 
-            <col style={{ width: '8%' }} />  {/* Aumentata per il Badge Stato */}
             <col style={{ width: '6%' }} />  
+            <col style={{ width: '14%' }} /> 
+            <col style={{ width: '15%' }} /> {/* Ridotta leggermente per far spazio ai badge */}
+            <col style={{ width: '11%' }} /> 
+            <col style={{ width: '12%' }} /> 
+            <col style={{ width: '9%' }} />  {/* Allargata per il badge MORTO */}
+            <col style={{ width: '8%' }} />  {/* Allargata per il tasto azione */}
           </colgroup>
           <thead>
             <tr>
@@ -221,7 +218,7 @@ function App() {
               return (
                 <tr key={p.id} className={rowClass}>
                   
-                  <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold' }}>
+                  <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em' }}>
                     {p.name}
                   </td>
                   
