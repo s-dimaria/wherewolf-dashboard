@@ -1,0 +1,20 @@
+{
+  "name": "Wherewolf Master Dashboard",
+  "short_name": "Wherewolf",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1a252f",
+  "icons": [
+    {
+      "src": "/wherewolf-dashboard.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/wherewolf-dashboard.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
