@@ -127,6 +127,19 @@ function App() {
   // Tutte le possibili fazioni per il menu a tendina dinamico
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
 
+  // --- CALCOLATORI PER I VOTI ---
+  const alivePlayersList = players.filter(p => p.status === 'vivo');
+  const aliveCount = alivePlayersList.length;
+
+  const totalDayVotes = players.reduce((sum, p) => sum + (p.votes || 0), 0);
+  const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
+
+  // Chi vota al ballottaggio? I vivi, MENO i ballotanti, ECCETTO se sono della Fazione Città.
+  const eligibleBallotVotersCount = alivePlayersList.filter(p => {
+    if (p.isBallot && p.fazione !== 'Città') return false;
+    return true;
+  }).length;
+
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1400px', margin: '0 auto' }}>
       
@@ -192,9 +205,24 @@ function App() {
               <th>Ruolo</th>
               <th>Mistico</th>
               <th>Fazione Dinamica & Aura</th>
-              <th>Note</th>
-              <th>Voti</th>
-              <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio</th>
+              <th>Note Notturne</th>
+              
+              {/* Contatore Votazione */}
+              <th>
+                Voti<br/>
+                <span style={{ fontSize: '0.8em', color: '#f39c12' }}>
+                  ({totalDayVotes} / {aliveCount})
+                </span>
+              </th>
+              
+              {/* Contatore Ballottaggio */}
+              <th style={{ backgroundColor: '#c0392b' }}>
+                Ballottaggio <br/>
+                <span style={{ fontSize: '0.8em', color: '#fdf3e7' }}>
+                  ({totalBallotVotes} / {eligibleBallotVotersCount})
+                </span>
+              </th>
+              
               <th>Stato</th>
               <th>Azioni</th>
             </tr>
