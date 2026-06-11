@@ -124,7 +124,6 @@ function App() {
       setGameStarted(false);
   };
 
-  // Tutte le possibili fazioni per il menu a tendina dinamico
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
 
   // --- CALCOLATORI PER I VOTI ---
@@ -134,7 +133,6 @@ function App() {
   const totalDayVotes = players.reduce((sum, p) => sum + (p.votes || 0), 0);
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
 
-  // Chi vota al ballottaggio? I vivi, MENO i ballotanti, ECCETTO se sono della Fazione Città.
   const eligibleBallotVotersCount = alivePlayersList.filter(p => {
     if (p.isBallot && p.fazione !== 'Città') return false;
     return true;
@@ -156,7 +154,7 @@ function App() {
       </div>
 
       {victoryStatus && (
-        <div style={{ backgroundColor: victoryStatus.winner === 'Villaggio' ? '#1e4620' : '#4a1515', padding: '20px', borderRadius: '8px', textAlign: 'center', marginBottom: '20px', border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}` }}>
+        <div className="victory-banner" style={{ backgroundColor: victoryStatus.winner === 'Villaggio' ? '#1e4620' : '#4a1515', border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}` }}>
           <h2 style={{ margin: '0 0 10px 0', color: 'white' }}>VITTORIA: {victoryStatus.winner.toUpperCase()}!</h2>
           <p style={{ margin: 0, fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
         </div>
@@ -190,10 +188,10 @@ function App() {
             <col style={{ width: '13%' }} /> 
             <col style={{ width: '7%' }} />  
             <col style={{ width: '14%' }} /> 
-            <col style={{ width: '18%' }} /> 
+            <col style={{ width: '16%' }} /> {/* Adattata per il Badge Stato */}
             <col style={{ width: '12%' }} /> 
             <col style={{ width: '12%' }} /> 
-            <col style={{ width: '6%' }} />  
+            <col style={{ width: '8%' }} />  {/* Aumentata per il Badge Stato */}
             <col style={{ width: '6%' }} />  
           </colgroup>
           <thead>
@@ -218,7 +216,7 @@ function App() {
               if (p.fazione === "Vampiro") currentAura = "Oscura";
               if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
 
-              const rowClass = isDead ? 'row-dead' : p.isBallot ? 'row-ballot' : 'row-alive';
+              const rowClass = isDead ? 'row-dead animated-row' : p.isBallot ? 'row-ballot animated-row' : 'row-alive animated-row';
               
               return (
                 <tr key={p.id} className={rowClass}>
@@ -260,13 +258,13 @@ function App() {
                   
                   <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
                     {!isDead && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
-                        <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <input type="checkbox" checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
+                      <div className="ballot-wrapper">
+                        <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                          <input type="checkbox" style={{ transform: 'scale(1.2)' }} checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
                           Ballottante
                         </label>
                         {p.isBallot && (
-                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                           <div className="ballot-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                              <button className="action-btn" onClick={() => decrementVote(p.id, p.ballotVotes, 'ballotVotes')}>-</button>
                              <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center', color: '#e74c3c' }}>{p.ballotVotes || 0}</span>
                              <button className="action-btn" onClick={() => incrementVote(p.id, p.ballotVotes, 'ballotVotes')}>+</button>
@@ -276,8 +274,10 @@ function App() {
                     )}
                   </td>
                   
-                  <td data-label="Stato" style={{ color: isDead ? '#e74c3c' : '#2ecc71', fontWeight: 'bold' }}>
-                    {p.status.toUpperCase()}
+                  <td data-label="Stato">
+                    <span className={`status-badge ${isDead ? 'status-morto' : 'status-vivo'}`}>
+                      {isDead ? 'Morto' : 'Vivo'}
+                    </span>
                   </td>
                   
                   <td data-label="Azioni">
