@@ -204,7 +204,7 @@ function App() {
               <th style={{ textAlign: 'left' }}>Nome</th>
               <th>Ruolo</th>
               <th>Mistico</th>
-              <th>Fazione Dinamica & Aura</th>
+              <th>Fazione & Aura</th>
               <th>Note Notturne</th>
               
               {/* Contatore Votazione */}
