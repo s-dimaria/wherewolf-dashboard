@@ -180,16 +180,17 @@ function App() {
 
       <div className="table-wrapper">
         <table className="game-table">
+          {/* NUOVO BILANCIAMENTO COLONNE (Totale 100%) */}
           <colgroup>
-            <col style={{ width: '12%' }} /> 
-            <col style={{ width: '13%' }} /> 
-            <col style={{ width: '6%' }} />  
-            <col style={{ width: '14%' }} /> 
-            <col style={{ width: '15%' }} /> {/* Ridotta leggermente per far spazio ai badge */}
-            <col style={{ width: '11%' }} /> 
-            <col style={{ width: '12%' }} /> 
-            <col style={{ width: '9%' }} />  {/* Allargata per il badge MORTO */}
-            <col style={{ width: '8%' }} />  {/* Allargata per il tasto azione */}
+            <col style={{ width: '11%' }} /> {/* Nome */}
+            <col style={{ width: '13%' }} /> {/* Ruolo */}
+            <col style={{ width: '8%' }} />  {/* Mistico (Allargato) */}
+            <col style={{ width: '13%' }} /> {/* Fazione */}
+            <col style={{ width: '13%' }} /> {/* Note */}
+            <col style={{ width: '11%' }} /> {/* Voti */}
+            <col style={{ width: '12%' }} /> {/* Ballottaggio */}
+            <col style={{ width: '9%' }} />  {/* Stato */}
+            <col style={{ width: '10%' }} /> {/* Azioni (Allargato per i bottoni) */}
           </colgroup>
           <thead>
             <tr>
@@ -231,7 +232,7 @@ function App() {
                   </td>
                   
                   <td data-label="Fazione & Aura">
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                    <div className="fazione-wrapper">
                       <select className="dark-input" style={{ width: '100%', maxWidth: '140px', padding: '4px', marginBottom: '4px' }} value={p.fazione || roleInfo.fazione} onChange={(e) => updateField(p.id, 'fazione', e.target.value)}>
                         {FAZIONI_POSSIBILI.map(f => <option key={f} value={f}>{f}</option>)}
                       </select>
@@ -278,7 +279,7 @@ function App() {
                   </td>
                   
                   <td data-label="Azioni">
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                    <div className="actions-wrapper">
                       {gameStarted ? (
                         <button onClick={() => toggleStatus(p.id, p.status)} className="action-btn" title={isDead ? "Resuscita" : "Uccidi"}>
                           {isDead ? '💖' : '💀'}
