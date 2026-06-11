@@ -189,8 +189,9 @@ function App() {
           <thead>
             <tr style={{ backgroundColor: '#2c3e50', color: 'white' }}>
               <th style={{ textAlign: 'left' }}>Nome</th>
-              <th>Ruolo (🔮=Mistico)</th>
-              <th>Fazione & Aura</th>
+              <th>Ruolo</th>
+              <th>Mistico</th>
+              <th>Fazione Dinamica & Aura</th>
               <th>Note</th>
               <th>Voti</th>
               <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio</th>
@@ -212,13 +213,15 @@ function App() {
                   
                   <td style={{ textAlign: 'left' }}><strong>{p.name}</strong></td>
                   
-                  {/* Nome Ruolo + Icona Mistico se applicabile */}
-                  <td>
-                    {p.role} 
-                    {ROLE_DATA[p.role]?.misticismo === 'Sì' && <span title="Mistico" style={{ marginLeft: '5px', fontSize: '1.2em' }}>🔮</span>}
+                  {/* Nome Ruolo */}
+                  <td>{p.role}</td>
+                  
+                  {/* Colonna Mistico*/}
+                  <td style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#8e44ad' : '#7f8c8d' }}>
+                    {roleInfo.misticismo || 'No'}
                   </td>
                   
-                  {/* Select Dinamica per Sovrascrivere la Fazione (Contagio/Amanti) */}
+                  {/* Select Dinamica per Sovrascrivere la Fazione */}
                   <td style={{ fontSize: '0.9em' }}>
                     <select 
                       value={p.fazione || roleInfo.fazione} 

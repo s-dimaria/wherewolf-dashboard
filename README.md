@@ -9,7 +9,7 @@ Una splendida web app interattiva e reattiva progettata per i Master di **Wherew
 *   **100% Centralizzata per il Master:** Nessuna interazione richiesta sui telefoni dei giocatori. Il Master controlla l'intero ecosistema dal proprio tablet o smartphone.
 *   **Smart Role Search:** Barra di inserimento dei giocatori con sistema di autocompletamento stile Google (basato su datalist alfabetico) per una configurazione fulminea della stanza.
 *   **Gestione Fase Diurna & Ballottaggio:** Contatori incrementali separati per i voti di accusa diurni e per i voti caldi del ballottaggio. Pulsante di reset rapido per passare al giorno successivo.
-*   **Misticismo Visivo:** Icona indicatrice (`🔮`) applicata automaticamente accanto al nome dei ruoli classificati come Mistici dal regolamento, per gestire rapidamente i risvegli criminali (es. Assassino).
+*   **Colonna Misticismo:** Una colonna dedicata che indica chiaramente ("Sì" o "No") i ruoli classificati come Mistici dal regolamento, per gestire rapidamente i risvegli criminali (es. Assassino).
 *   **Fazione Dinamica & Aura Adattiva:** Menu a tendina per sovrascrivere la fazione di un giocatore in tempo reale (in caso di vampirizzazione o legami d'amore). L'Aura (Chiara/Oscura) si adatta dinamicamente alla nuova fazione selezionata.
 *   **Motore di Vittoria Real-Time:** Algoritmo automatico basato sulle regole ufficiali del manuale. Monitora la parità numerica dei Lupi o delle Progenie e la totale epurazione dell'Ombra, attivando banner di game-over istantanei.
 *   **Manuale Integrato:** Collegamento rapido nell'header per consultare il PDF del regolamento ufficiale in qualsiasi momento direttamente dalla dashboard.
@@ -36,7 +36,6 @@ wherewolf-app/
 │   ├── firebase.js        # Inizializzazione ed esportazione del DB Firestore
 │   ├── roles.js           # Il dizionario ufficiale dei ruoli con Fazioni, Aure e Misticismo
 │   └── App.css            # Stili grafici della dashboard
-
 ```
 
 ## 🚀 Sviluppo Locale
