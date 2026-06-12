@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
 import {
   Heart,
   History,
@@ -158,40 +158,57 @@ function App() {
 
   const removePlayer = async (id) => await deleteDoc(doc(db, 'players', id));
 
+  // --- SALVATAGGIO & RESET CON WRITEBATCH ---
   const resetAllVotes = async () => {
     if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
-      
-      const dayLog = players
-        .filter(p => p.votes > 0 || p.ballotVotes > 0 || p.isBallot)
-        .map(p => ({
-          name: p.name,
-          role: p.role,
-          votes: p.votes,
-          ballotVotes: p.ballotVotes,
-          isBallot: p.isBallot
-        }));
+      try {
+        const dayLog = players
+          .filter(p => p.votes > 0 || p.ballotVotes > 0 || p.isBallot)
+          .map(p => ({
+            name: p.name,
+            role: p.role,
+            votes: p.votes,
+            ballotVotes: p.ballotVotes,
+            isBallot: p.isBallot
+          }));
 
-      if (dayLog.length > 0) {
-        await addDoc(collection(db, 'history'), {
-          date: new Date().toISOString(),
-          log: dayLog
+        if (dayLog.length > 0) {
+          await addDoc(collection(db, 'history'), {
+            date: new Date().toISOString(),
+            log: dayLog
+          });
+        }
+
+        const batch = writeBatch(db);
+        players.forEach((p) => {
+          const playerRef = doc(db, 'players', p.id);
+          batch.update(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
         });
-      }
+        await batch.commit();
 
-      players.forEach(async (p) => {
-        const playerRef = doc(db, 'players', p.id);
-        await updateDoc(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
-      });
+      } catch (error) {
+        console.error("Errore nel reset dei voti: ", error);
+        alert("Si è verificato un errore durante il reset. Riprova.");
+      }
     }
   };
 
-  const resetEntireGame = () => {
+  const resetEntireGame = async () => {
     if(window.confirm("⚠️ ATTENZIONE: Svuotare l'intera stanza e cancellare lo storico?")) {
-      players.forEach(async (p) => await deleteDoc(doc(db, 'players', p.id)));
-      history.forEach(async (h) => await deleteDoc(doc(db, 'history', h.id)));
-      setGameStarted(false);
-      setTimerTime(300);
-      setIsTimerRunning(false);
+      try {
+        const batch = writeBatch(db);
+        
+        players.forEach((p) => batch.delete(doc(db, 'players', p.id)));
+        history.forEach((h) => batch.delete(doc(db, 'history', h.id)));
+        
+        await batch.commit();
+
+        setGameStarted(false);
+        setTimerTime(300);
+        setIsTimerRunning(false);
+      } catch (error) {
+        console.error("Errore nello svuotamento partita: ", error);
+      }
     }
   };
 
@@ -216,7 +233,7 @@ function App() {
         <div className="modal-overlay">
           <div className="modal-content" style={{ border: `3px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}`, textAlign: 'center' }}>
             <button className="close-modal-btn" onClick={() => setShowVictoryModal(false)}>×</button>
-            <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+            <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', lineHeight: '1.2' }}>
               <Trophy size={32} /> VITTORIA: {victoryStatus.winner.toUpperCase()}!
             </h1>
             <p style={{ fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
@@ -259,13 +276,9 @@ function App() {
       )}
 
       <div className="header-container">
-        
-        {/* LOGO UFFICIALE */}
-        <img src="/logo.png" alt="Wherewolf" className="header-logo" />
+        <img src="/logo.png?v=2" alt="Wherewolf" className="header-logo" />
 
         <div className="button-group">
-          
-          {/* SEZIONE TIMER */}
           <div className="timer-container">
             <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
             <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#e74c3c' : '#ecf0f1' }}>
@@ -311,14 +324,16 @@ function App() {
         </div>
       )}
 
-      <div className="mobile-stats">
-        <div style={{ color: '#f39c12', marginBottom: '5px' }}>
-          <strong>Voti Giorno Totali:</strong> {totalDayVotes}/{aliveCount}
+      {gameStarted && (
+        <div className="mobile-stats">
+          <div style={{ color: '#f39c12', marginBottom: '5px' }}>
+            <strong>Voti Giorno Totali:</strong> {totalDayVotes}/{aliveCount}
+          </div>
+          <div style={{ color: '#e74c3c' }}>
+            <strong>Voti Ballottaggio Totali:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}
+          </div>
         </div>
-        <div style={{ color: '#e74c3c' }}>
-          <strong>Voti Ballottaggio Totali:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}
-        </div>
-      </div>
+      )}
 
       <div className="table-wrapper">
         <table className="game-table">
