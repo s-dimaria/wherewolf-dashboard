@@ -1,7 +1,7 @@
 /* --- BASE DARK MODE --- */
 html, body {
-  background-color: #121212;
-  color: #e0e0e0;
+  background-color: #050505;
+  color: #c4c4c4;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -28,19 +28,14 @@ html, body {
   100% { transform: scale(1); opacity: 1; }
 }
 
-.animated-row {
-  animation: slideIn 0.3s ease forwards;
-}
-
-.ballot-controls {
-  animation: slideIn 0.2s ease-out forwards;
-}
+.animated-row { animation: slideIn 0.3s ease forwards; }
+.ballot-controls { animation: slideIn 0.2s ease-out forwards; }
 
 /* --- MODALS (POP-UP) --- */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.95);
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -50,14 +45,15 @@ html, body {
 }
 
 .modal-content {
-  background: #1e1e1e;
-  border-radius: 12px;
+  background: #0f0f0f;
+  border-radius: 8px;
   padding: 25px;
   position: relative;
   animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  border: 1px solid #444;
+  border: 1px solid #333;
   width: 100%;
   max-width: 500px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
 }
 
 .close-modal-btn {
@@ -65,13 +61,12 @@ html, body {
   top: 10px; right: 15px;
   background: transparent;
   border: none;
-  color: #aaa;
+  color: #555;
   font-size: 1.8em;
   cursor: pointer;
   transition: color 0.2s;
 }
-
-.close-modal-btn:hover { color: white; }
+.close-modal-btn:hover { color: #aaa; }
 
 /* --- HEADER E PULSANTI --- */
 .header-container {
@@ -86,7 +81,7 @@ html, body {
 .header-logo {
   height: 150px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+  filter: drop-shadow(0 4px 10px rgba(100,0,0,0.3));
 }
 
 .button-group {
@@ -98,63 +93,65 @@ html, body {
 }
 
 .btn {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
+  padding: 8px 14px;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
-  color: white;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-size: 0.85em;
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.5);
 }
 
-.btn:hover { opacity: 0.8; transform: translateY(-2px); }
-.btn:active { transform: translateY(0); }
-.btn-start { background-color: #2ecc71; }
-.btn-stop { background-color: #e74c3c; }
-.btn-day { background-color: #f39c12; }
-.btn-danger { background-color: #8e44ad; }
-.btn-link { background-color: #3498db; text-decoration: none; }
-.btn-secondary { background-color: #7f8c8d; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.8); filter: brightness(1.2); }
+.btn:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.btn-start { background-color: #0a1f12; color: #4ade80; border: 1px solid #1e4d2b; }
+.btn-stop { background-color: #2f0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+.btn-day { background-color: #291400; color: #fbbf24; border: 1px solid #78350f; }
+.btn-danger { background-color: #1a0505; color: #dc2626; border: 1px solid #450a0a; }
+.btn-link { background-color: #0a1429; color: #60a5fa; border: 1px solid #1e3a8a; }
+.btn-secondary { background-color: #171717; color: #a3a3a3; border: 1px solid #404040; }
 
 /* --- TIMER --- */
 .timer-container {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #1a252f;
+  background: #0a0a0a;
   padding: 5px 12px;
-  border-radius: 8px;
-  border: 1px solid #333;
+  border-radius: 6px;
+  border: 1px solid #222;
 }
 .timer-display {
   font-size: 1.3em;
   font-weight: bold;
   font-family: monospace;
-  color: #ecf0f1;
+  color: #c4c4c4;
   width: 65px;
   text-align: center;
 }
 .timer-btn {
   background: transparent;
-  border: 1px solid #555;
-  color: white;
+  border: 1px solid #333;
+  color: #888;
   border-radius: 4px;
   cursor: pointer;
   padding: 2px 6px;
 }
-.timer-btn:hover { background: #333; }
+.timer-btn:hover { background: #222; color: #ccc; }
 
 /* --- FORM INSERIMENTO --- */
 .form-container {
-  background: #1e1e1e;
+  background: #0a0a0a;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border: 1px solid #333;
+  border: 1px solid #222;
 }
 
 .add-form {
@@ -164,34 +161,33 @@ html, body {
 }
 
 .dark-input {
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #444;
+  background: #000000;
+  color: #c4c4c4;
+  border: 1px solid #333;
   padding: 10px;
-  border-radius: 5px;
+  border-radius: 4px;
   box-sizing: border-box;
   transition: border-color 0.3s ease;
 }
-
-.dark-input:focus { outline: none; border-color: #3498db; }
+.dark-input:focus { outline: none; border-color: #7f1d1d; }
 
 /* --- RIASSUNTO VOTI MOBILE --- */
 .mobile-stats {
   display: none;
-  background: #1e1e1e;
+  background: #0a0a0a;
   padding: 15px;
   margin-bottom: 15px;
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid #222;
   text-align: center;
 }
 
 /* --- TABELLA RIGIDA --- */
 .table-wrapper {
-  background: #1e1e1e;
+  background: #0a0a0a;
   border-radius: 8px;
-  border: 1px solid #333;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  border: 1px solid #222;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
   overflow: hidden; 
 }
 
@@ -202,72 +198,53 @@ html, body {
 }
 
 .game-table th, .game-table td {
-  border: 1px solid #333;
+  border: 1px solid #1a1a1a;
   padding: 12px 8px;
   text-align: center;
   vertical-align: middle;
 }
 
 .game-table th {
-  background-color: #1a252f;
-  color: #ecf0f1;
-  font-size: 0.95em;
+  background-color: #050505;
+  color: #888;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   padding: 15px 8px;
+  border-bottom: 2px solid #222;
 }
 
-.game-table tr {
-  transition: background-color 0.4s ease, opacity 0.4s ease;
-}
-.row-alive { background-color: #242424; }
-.row-dead { background-color: #3a1515; opacity: 0.8; }
-.row-ballot { background-color: #4a3000; }
+.game-table tr { transition: background-color 0.4s ease, opacity 0.4s ease; }
+.row-alive { background-color: #0a0a0a; }
+.row-dead { background-color: #170808; opacity: 0.6; }
+.row-ballot { background-color: #1a1205; }
 
-/* --- BADGE STATO --- */
+/* --- BADGE STATO DESATURATI --- */
 .status-badge {
   display: inline-flex;
   justify-content: center;
   align-items: center;
   padding: 5px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
+  border-radius: 4px;
+  font-size: 0.75em;
   font-weight: bold;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   text-transform: uppercase;
   min-width: 60px; 
   box-sizing: border-box;
 }
-.status-vivo { background-color: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); }
-.status-morto { background-color: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.4); }
+.status-vivo { background: #0a1f12; color: #4ade80; border: 1px solid #1e4d2b; }
+.status-morto { background: #2f0a0a; color: #f87171; border: 1px solid #7f1d1d; }
 
 /* --- CLASSI DI ALLINEAMENTO DESKTOP/MOBILE --- */
-.fazione-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.actions-wrapper {
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: nowrap;
-}
-
-.ballot-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-}
+.fazione-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.actions-wrapper { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: nowrap; }
+.ballot-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; }
 
 .action-btn {
-  background: #333;
-  color: white;
-  border: 1px solid #555;
+  background: #111;
+  color: #888;
+  border: 1px solid #333;
   border-radius: 4px;
   padding: 6px 10px;
   cursor: pointer;
@@ -278,61 +255,33 @@ html, body {
   justify-content: center;
   flex-shrink: 0; 
 }
-.action-btn:hover { background: #444; transform: scale(1.1); }
+.action-btn:hover { background: #222; color: #fff; border-color: #555; }
 .action-btn:active { transform: scale(0.95); }
 
 /* =========================================
-   RESPONSIVE: SMARTPHONE (CARD LAYOUT)
+   RESPONSIVE: SMARTPHONE
    ========================================= */
 @media (max-width: 768px) {
-  
-  .header-container, .button-group, .add-form { 
-    flex-direction: column; 
-    align-items: stretch; 
-  }
-  
-  .header-logo {
-    height: 100px; 
-    margin-bottom: 5px;
-  }
-
-  .button-group button, .button-group a { 
-    width: 100%; 
-    text-align: center; 
-    box-sizing: border-box;
-  }
-  
-  .add-form input, .add-form button { 
-    width: 100%; 
-    box-sizing: border-box; 
-  }
-
-  .timer-container {
-    justify-content: center;
-  }
-
+  .header-container, .button-group, .add-form { flex-direction: column; align-items: stretch; }
+  .header-logo { height: 100px; margin-bottom: 5px; }
+  .button-group button, .button-group a { width: 100%; text-align: center; box-sizing: border-box; }
+  .add-form input, .add-form button { width: 100%; box-sizing: border-box; }
+  .timer-container { justify-content: center; }
   .mobile-stats { display: block; }
 
-  .game-table, .game-table tbody, .game-table tr, .game-table td {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .game-table thead, .game-table colgroup { 
-    display: none; 
-  }
+  .game-table, .game-table tbody, .game-table tr, .game-table td { display: block; width: 100%; box-sizing: border-box; }
+  .game-table thead, .game-table colgroup { display: none; }
   
   .game-table tr {
     margin-bottom: 20px;
-    border: 1px solid #555;
+    border: 1px solid #222;
     border-radius: 8px;
     overflow: hidden;
   }
   
   .game-table td {
     border: none;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #1a1a1a;
     position: relative;
     padding: 12px 10px 12px 40%;
     display: flex;
@@ -341,10 +290,7 @@ html, body {
     min-height: 40px;
     text-align: right;
   }
-  
-  .game-table td:last-child {
-    border-bottom: none;
-  }
+  .game-table td:last-child { border-bottom: none; }
   
   .game-table td::before {
     content: attr(data-label);
@@ -355,19 +301,11 @@ html, body {
     width: 35%;
     text-align: left;
     font-weight: bold;
-    color: #95a5a6;
-    font-size: 0.85em;
+    color: #666;
+    font-size: 0.8em;
     text-transform: uppercase;
   }
 
-  .game-table td > input[type="text"],
-  .game-table td > select {
-    width: 100%;
-    max-width: 160px;
-  }
-
-  .fazione-wrapper, .ballot-wrapper, .actions-wrapper {
-    align-items: flex-end;
-    justify-content: flex-end;
-  }
+  .game-table td > input[type="text"], .game-table td > select { width: 100%; max-width: 160px; }
+  .fazione-wrapper, .ballot-wrapper, .actions-wrapper { align-items: flex-end; justify-content: flex-end; }
 }
