@@ -202,7 +202,7 @@ function App() {
           <div className="modal-content" style={{ border: `3px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}`, textAlign: 'center' }}>
             <button className="close-modal-btn" onClick={() => setShowVictoryModal(false)}>×</button>
             <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c' }}>
-              🏆 VITTORIA: {victoryStatus.winner.toUpperCase()}!
+              VITTORIA: {victoryStatus.winner.toUpperCase()}!
             </h1>
             <p style={{ fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
           </div>
@@ -253,9 +253,9 @@ function App() {
             </div>
             <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
             <button className="timer-btn" style={{ marginLeft: '5px' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-              {isTimerRunning ? '⏸' : '▶️'}
+              {isTimerRunning ? '⏸' : '▶'}
             </button>
-            <button className="timer-btn" onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>🔄</button>
+            <button className="timer-btn" onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>🔄️</button>
           </div>
 
           <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
