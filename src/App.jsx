@@ -335,129 +335,131 @@ function App() {
         </div>
       )}
 
-      <div className="table-wrapper">
-        <table className="game-table">
-          <colgroup>
-            <col style={{ width: '11%' }} /> 
-            <col style={{ width: '13%' }} /> 
-            <col style={{ width: '8%' }} />  
-            <col style={{ width: '13%' }} /> 
-            <col style={{ width: '13%' }} /> 
-            <col style={{ width: '11%' }} /> 
-            <col style={{ width: '12%' }} /> 
-            <col style={{ width: '9%' }} />  
-            <col style={{ width: '10%' }} /> 
-          </colgroup>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Nome</th>
-              <th>Ruolo</th>
-              <th>Mistico</th>
-              <th>Fazione & Aura</th>
-              <th>Note</th>
-              <th>Voti<br/><span style={{ color: '#f39c12' }}>({totalDayVotes}/{aliveCount})</span></th>
-              <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio<br/><span style={{ color: '#fdf3e7' }}>({totalBallotVotes}/{eligibleBallotVotersCount})</span></th>
-              <th>Stato</th>
-              <th>Azioni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {players.map((p) => {
-              const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
-              const isDead = p.status === 'morto';
-              
-              let currentAura = roleInfo.aura;
-              if (p.fazione === "Vampiro") currentAura = "Oscura";
-              if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
+      {players.length > 0 && (
+        <div className="table-wrapper">
+          <table className="game-table">
+            <colgroup>
+              <col style={{ width: '11%' }} /> 
+              <col style={{ width: '13%' }} /> 
+              <col style={{ width: '8%' }} />  
+              <col style={{ width: '13%' }} /> 
+              <col style={{ width: '13%' }} /> 
+              <col style={{ width: '11%' }} /> 
+              <col style={{ width: '12%' }} /> 
+              <col style={{ width: '9%' }} />  
+              <col style={{ width: '10%' }} /> 
+            </colgroup>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left' }}>Nome</th>
+                <th>Ruolo</th>
+                <th>Mistico</th>
+                <th>Fazione & Aura</th>
+                <th>Note</th>
+                <th>Voti<br/><span style={{ color: '#f39c12' }}>({totalDayVotes}/{aliveCount})</span></th>
+                <th style={{ backgroundColor: '#c0392b' }}>Ballottaggio<br/><span style={{ color: '#fdf3e7' }}>({totalBallotVotes}/{eligibleBallotVotersCount})</span></th>
+                <th>Stato</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((p) => {
+                const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
+                const isDead = p.status === 'morto';
+                
+                let currentAura = roleInfo.aura;
+                if (p.fazione === "Vampiro") currentAura = "Oscura";
+                if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
 
-              const rowClass = isDead ? 'row-dead animated-row' : p.isBallot ? 'row-ballot animated-row' : 'row-alive animated-row';
-              
-              return (
-                <tr key={p.id} className={rowClass}>
-                  
-                  <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em' }}>
-                    {p.name}
-                  </td>
-                  
-                  <td data-label="Ruolo">
-                    {p.role}
-                  </td>
-                  
-                  <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9b59b6' : '#7f8c8d' }}>
-                    {roleInfo.misticismo || 'No'}
-                  </td>
-                  
-                  <td data-label="Fazione & Aura">
-                    <div className="fazione-wrapper">
-                      <select className="dark-input" style={{ width: '100%', maxWidth: '140px', padding: '4px', marginBottom: '4px' }} value={p.fazione || roleInfo.fazione} onChange={(e) => updateField(p.id, 'fazione', e.target.value)}>
-                        {FAZIONI_POSSIBILI.map(f => <option key={f} value={f}>{f}</option>)}
-                      </select>
-                      <span style={{ fontSize: '0.85em', color: '#aaa' }}>(Aura: {currentAura})</span>
-                    </div>
-                  </td>
-                  
-                  <td data-label="Note">
-                    <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', padding: '6px' }} />
-                  </td>
-                  
-                  <td data-label="Voti">
-                    {!isDead ? (
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                        <button className="action-btn" onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
-                        <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{p.votes || 0}</span>
-                        <button className="action-btn" onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
+                const rowClass = isDead ? 'row-dead animated-row' : p.isBallot ? 'row-ballot animated-row' : 'row-alive animated-row';
+                
+                return (
+                  <tr key={p.id} className={rowClass}>
+                    
+                    <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em' }}>
+                      {p.name}
+                    </td>
+                    
+                    <td data-label="Ruolo">
+                      {p.role}
+                    </td>
+                    
+                    <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9b59b6' : '#7f8c8d' }}>
+                      {roleInfo.misticismo || 'No'}
+                    </td>
+                    
+                    <td data-label="Fazione & Aura">
+                      <div className="fazione-wrapper">
+                        <select className="dark-input" style={{ width: '100%', maxWidth: '140px', padding: '4px', marginBottom: '4px' }} value={p.fazione || roleInfo.fazione} onChange={(e) => updateField(p.id, 'fazione', e.target.value)}>
+                          {FAZIONI_POSSIBILI.map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                        <span style={{ fontSize: '0.85em', color: '#aaa' }}>(Aura: {currentAura})</span>
                       </div>
-                    ) : (
-                      <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
-                    )}
-                  </td>
-                  
-                  <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
-                    {!isDead ? (
-                      <div className="ballot-wrapper">
-                        <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
-                          <input type="checkbox" style={{ transform: 'scale(1.2)' }} checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
-                          Ballottante
-                        </label>
-                        {p.isBallot && (
-                           <div className="ballot-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                             <button className="action-btn" onClick={() => decrementVote(p.id, p.ballotVotes, 'ballotVotes')}>-</button>
-                             <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center', color: '#e74c3c' }}>{p.ballotVotes || 0}</span>
-                             <button className="action-btn" onClick={() => incrementVote(p.id, p.ballotVotes, 'ballotVotes')}>+</button>
-                           </div>
+                    </td>
+                    
+                    <td data-label="Note">
+                      <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', padding: '6px' }} />
+                    </td>
+                    
+                    <td data-label="Voti">
+                      {!isDead ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                          <button className="action-btn" onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
+                          <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{p.votes || 0}</span>
+                          <button className="action-btn" onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
+                      )}
+                    </td>
+                    
+                    <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
+                      {!isDead ? (
+                        <div className="ballot-wrapper">
+                          <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+                            <input type="checkbox" style={{ transform: 'scale(1.2)' }} checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
+                            Ballottante
+                          </label>
+                          {p.isBallot && (
+                             <div className="ballot-controls" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                               <button className="action-btn" onClick={() => decrementVote(p.id, p.ballotVotes, 'ballotVotes')}>-</button>
+                               <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center', color: '#e74c3c' }}>{p.ballotVotes || 0}</span>
+                               <button className="action-btn" onClick={() => incrementVote(p.id, p.ballotVotes, 'ballotVotes')}>+</button>
+                             </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
+                      )}
+                    </td>
+                    
+                    <td data-label="Stato">
+                      <span className={`status-badge ${isDead ? 'status-morto' : 'status-vivo'}`}>
+                        {isDead ? 'Morto' : 'Vivo'}
+                      </span>
+                    </td>
+                    
+                    <td data-label="Azioni">
+                      <div className="actions-wrapper">
+                        {gameStarted ? (
+                          <button onClick={() => toggleStatus(p.id, p.status)} className="action-btn" title={isDead ? "Resuscita" : "Uccidi"}>
+                            {isDead ? <Heart size={18} color="#e74c3c" /> : <Skull size={18} />}
+                          </button>
+                        ) : (
+                          <button onClick={() => removePlayer(p.id)} className="action-btn" style={{ borderColor: 'transparent', background: 'transparent' }} title="Elimina Giocatore">
+                            <Trash2 size={20} color="#e74c3c" />
+                          </button>
                         )}
                       </div>
-                    ) : (
-                      <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
-                    )}
-                  </td>
-                  
-                  <td data-label="Stato">
-                    <span className={`status-badge ${isDead ? 'status-morto' : 'status-vivo'}`}>
-                      {isDead ? 'Morto' : 'Vivo'}
-                    </span>
-                  </td>
-                  
-                  <td data-label="Azioni">
-                    <div className="actions-wrapper">
-                      {gameStarted ? (
-                        <button onClick={() => toggleStatus(p.id, p.status)} className="action-btn" title={isDead ? "Resuscita" : "Uccidi"}>
-                          {isDead ? <Heart size={18} color="#e74c3c" /> : <Skull size={18} />}
-                        </button>
-                      ) : (
-                        <button onClick={() => removePlayer(p.id)} className="action-btn" style={{ borderColor: 'transparent', background: 'transparent' }} title="Elimina Giocatore">
-                          <Trash2 size={20} color="#e74c3c" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                  
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
