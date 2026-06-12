@@ -71,22 +71,25 @@ body {
 /* --- HEADER E PULSANTI --- */
 .header-container {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
+  margin-bottom: 30px;
+  gap: 20px;
 }
 
 .header-logo {
-  height: 100px;
+  height: 150px;
   object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
 }
 
 .button-group {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
+  justify-content: center; /* Centra i bottoni */
+  width: 100%;
 }
 
 .btn {
@@ -284,7 +287,8 @@ body {
   }
   
   .header-logo {
-    margin: 0 auto 15px auto;
+    height: 100px;
+    margin-bottom: 5px;
   }
 
   .button-group button, .button-group a { 
