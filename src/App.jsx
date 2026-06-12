@@ -279,35 +279,43 @@ function App() {
 
         <div className="button-group">
           
-          <div className="timer-container">
-            <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-            <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>
-              {formatTime(timerTime)}
+          {/* PRIMA RIGA BOTTONI: Controlli Primari */}
+          <div className="button-row">
+            <div className="timer-container">
+              <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>
+                {formatTime(timerTime)}
+              </div>
+              <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+              <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+                {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+              </button>
+              <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+                <RotateCcw size={16} />
+              </button>
             </div>
-            <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-            <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-              {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+
+            <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
+              {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
             </button>
-            <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
-              <RotateCcw size={16} />
+            <button className="btn btn-day" onClick={resetAllVotes}>
+              <Sun size={16} /> Nuovo Giorno
+            </button>
+            <button className="btn btn-danger" onClick={resetEntireGame}>
+              <Trash2 size={16} /> Nuova Partita
             </button>
           </div>
 
-          <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
-            {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
-          </button>
-          <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
-            <History size={16} /> Storico
-          </button>
-          <button className="btn btn-day" onClick={resetAllVotes}>
-            <Sun size={16} /> Nuovo Giorno
-          </button>
-          <button className="btn btn-danger" onClick={resetEntireGame}>
-            <Trash2 size={16} /> Nuova Partita
-          </button>
-          <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">
-            <BookOpen size={16} /> Manuale
-          </a>
+          {/* SECONDA RIGA BOTTONI: Controlli Secondari */}
+          <div className="button-row">
+            <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
+              <History size={16} /> Storico
+            </button>
+            <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">
+              <BookOpen size={16} /> Manuale
+            </a>
+          </div>
+
         </div>
       </div>
 
@@ -342,15 +350,15 @@ function App() {
         <div className="table-wrapper">
           <table className="game-table">
             <colgroup>
-              <col style={{ width: '11%' }} /> 
-              <col style={{ width: '13%' }} /> 
-              <col style={{ width: '8%' }} />  
-              <col style={{ width: '13%' }} /> 
-              <col style={{ width: '13%' }} /> 
-              <col style={{ width: '11%' }} /> 
-              <col style={{ width: '12%' }} /> 
-              <col style={{ width: '9%' }} />  
-              <col style={{ width: '10%' }} /> 
+              <col style={{ width: '11%' }} /> {/* Nome */}
+              <col style={{ width: '12%' }} /> {/* Ruolo */}
+              <col style={{ width: '7%' }} />  {/* Mistico */}
+              <col style={{ width: '13%' }} /> {/* Fazione */}
+              <col style={{ width: '13%' }} /> {/* Note */}
+              <col style={{ width: '10%' }} /> {/* Voti */}
+              <col style={{ width: '14%' }} /> {/* Ballottaggio */}
+              <col style={{ width: '9%' }} />  {/* Stato */}
+              <col style={{ width: '11%' }} /> {/* Azioni */}
             </colgroup>
             <thead>
               <tr>
