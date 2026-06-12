@@ -1,5 +1,6 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
 import {
+  BookOpen,
   Heart,
   History,
   Pause,
@@ -305,6 +306,9 @@ function App() {
           <button className="btn btn-danger" onClick={resetEntireGame}>
             <Trash2 size={18} /> Nuova Partita
           </button>
+          <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">
+            <BookOpen size={18} /> Manuale
+          </a>
         </div>
       </div>
 
