@@ -1,9 +1,4 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
-import './App.css';
-import { db } from './firebase';
-import { ROLE_DATA } from './roles';
-// --- IMPORTAZIONE ICONE PROFESSIONALI ---
 import {
   Heart,
   History,
@@ -14,6 +9,10 @@ import {
   Square, Sun, Trash2,
   Trophy
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import './App.css';
+import { db } from './firebase';
+import { ROLE_DATA } from './roles';
 
 function App() {
   const [players, setPlayers] = useState([]);
