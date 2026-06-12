@@ -6,24 +6,39 @@ import { ROLE_DATA } from './roles';
 
 function App() {
   const [players, setPlayers] = useState([]);
+  const [history, setHistory] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
 
   const [masterName, setMasterName] = useState('');
   const [masterRole, setMasterRole] = useState('');
 
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [lastWinner, setLastWinner] = useState(null);
+
+  const [timerTime, setTimerTime] = useState(300);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+
   const sortedRoles = Object.keys(ROLE_DATA).sort((a, b) => a.localeCompare(b));
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'players'), (snapshot) => {
-      const playersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
+      const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPlayers(playersData.sort((a, b) => a.name.localeCompare(b.name)));
     });
-    return () => unsubscribe();
+
+    const unsubHistory = onSnapshot(collection(db, 'history'), (snapshot) => {
+      const historyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistory(historyData.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    });
+
+    return () => {
+      unsubPlayers();
+      unsubHistory();
+    };
   }, []);
 
+  // --- MOTORE DI VITTORIA ---
   const checkVictory = () => {
     if (!gameStarted) return null;
 
@@ -45,25 +60,53 @@ function App() {
     const aliveVampiri = alivePlayers.filter(p => p.fazione === "Vampiro").length;
     const aliveLupi = alivePlayers.filter(p => p.fazione === "Lupi del Branco" || ROLE_DATA[p.role]?.isWolf).length;
     
-    if (aliveOmbra === 0) {
-      return { winner: 'Villaggio', message: 'La minaccia dell\'Ombra è stata debellata! Vittoria degli Uomini.' };
-    }
-
+    if (aliveOmbra === 0) return { winner: 'Villaggio', message: 'La minaccia dell\'Ombra è stata debellata! Vittoria degli Uomini.' };
+    
     const aliveNonLupi = alivePlayers.length - aliveLupi;
-    if (aliveNonLupi <= aliveLupi && aliveVampiri === 0) {
-      return { winner: 'Lupi', message: 'I Lupi e i loro alleati hanno raggiunto la parità numerica. Vittoria dei Lupi!' };
-    }
+    if (aliveNonLupi <= aliveLupi && aliveVampiri === 0) return { winner: 'Lupi', message: 'I Lupi e i loro alleati hanno raggiunto la parità numerica. Vittoria dei Lupi!' };
 
     const aliveNonVampiri = alivePlayers.length - aliveVampiri;
-    if (aliveNonVampiri <= aliveVampiri && aliveVampiri > 0) {
-      return { winner: 'Vampiro', message: 'Il Vampiro e le sue Progenie dominano la notte. Vittoria dei Vampiri!' };
-    }
+    if (aliveNonVampiri <= aliveVampiri && aliveVampiri > 0) return { winner: 'Vampiro', message: 'Il Vampiro e le sue Progenie dominano la notte. Vittoria dei Vampiri!' };
 
     return null;
   };
 
   const victoryStatus = checkVictory();
 
+  useEffect(() => {
+    if (victoryStatus && victoryStatus.winner !== lastWinner) {
+      setShowVictoryModal(true);
+      setLastWinner(victoryStatus.winner);
+    } else if (!victoryStatus) {
+      setLastWinner(null);
+    }
+  }, [victoryStatus?.winner]);
+
+  useEffect(() => {
+    let interval;
+    if (isTimerRunning && timerTime > 0) {
+      interval = setInterval(() => {
+        setTimerTime((prev) => prev - 1);
+      }, 1000);
+    } else if (timerTime <= 0 && isTimerRunning) {
+      setIsTimerRunning(false);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, timerTime]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const adjustTimer = (val) => {
+    if (!isTimerRunning) {
+      setTimerTime((prev) => Math.max(0, prev + val));
+    }
+  };
+
+  // --- FUNZIONI DI GIOCO ---
   const handleMasterAdd = async (e) => {
     e.preventDefault();
     if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) {
@@ -89,14 +132,9 @@ function App() {
     await updateDoc(playerRef, { [field]: value });
   };
 
-  const incrementVote = async (id, currentVotes, field) => {
-    updateField(id, field, (currentVotes || 0) + 1);
-  };
-
+  const incrementVote = async (id, currentVotes, field) => updateField(id, field, (currentVotes || 0) + 1);
   const decrementVote = async (id, currentVotes, field) => {
-    if (currentVotes > 0) {
-      updateField(id, field, currentVotes - 1);
-    }
+    if (currentVotes > 0) updateField(id, field, currentVotes - 1);
   };
 
   const toggleStatus = async (id, currentStatus) => {
@@ -104,22 +142,43 @@ function App() {
     updateField(id, 'status', newStatus);
   };
 
-  const removePlayer = async (id) => {
-    await deleteDoc(doc(db, 'players', id));
-  };
+  const removePlayer = async (id) => await deleteDoc(doc(db, 'players', id));
 
-  const resetAllVotes = () => {
-    players.forEach(async (p) => {
+  const resetAllVotes = async () => {
+    if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
+      
+      const dayLog = players
+        .filter(p => p.votes > 0 || p.ballotVotes > 0 || p.isBallot)
+        .map(p => ({
+          name: p.name,
+          role: p.role,
+          votes: p.votes,
+          ballotVotes: p.ballotVotes,
+          isBallot: p.isBallot
+        }));
+
+      if (dayLog.length > 0) {
+        await addDoc(collection(db, 'history'), {
+          date: new Date().toISOString(),
+          log: dayLog
+        });
+      }
+
+      players.forEach(async (p) => {
         const playerRef = doc(db, 'players', p.id);
         await updateDoc(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
       });
+    }
   };
 
   const resetEntireGame = () => {
-    players.forEach(async (p) => {
-        await deleteDoc(doc(db, 'players', p.id));
-      });
+    if(window.confirm("⚠️ ATTENZIONE: Svuotare l'intera stanza e cancellare lo storico?")) {
+      players.forEach(async (p) => await deleteDoc(doc(db, 'players', p.id)));
+      history.forEach(async (h) => await deleteDoc(doc(db, 'history', h.id)));
       setGameStarted(false);
+      setTimerTime(300);
+      setIsTimerRunning(false);
+    }
   };
 
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
@@ -138,24 +197,75 @@ function App() {
   return (
     <div className="dashboard-container">
       
+      {victoryStatus && showVictoryModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ border: `3px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}`, textAlign: 'center' }}>
+            <button className="close-modal-btn" onClick={() => setShowVictoryModal(false)}>×</button>
+            <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c' }}>
+              🏆 VITTORIA: {victoryStatus.winner.toUpperCase()}!
+            </h1>
+            <p style={{ fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
+          </div>
+        </div>
+      )}
+
+      {showHistoryModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '600px' }}>
+            <button className="close-modal-btn" onClick={() => setShowHistoryModal(false)}>×</button>
+            <h2 style={{ marginTop: 0, borderBottom: '1px solid #444', paddingBottom: '10px' }}>📜 Storico Voti</h2>
+            <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
+              {history.length === 0 ? (
+                <p style={{ color: '#aaa', fontStyle: 'italic' }}>Nessun voto registrato finora.</p>
+              ) : (
+                history.map((h, i) => (
+                  <div key={h.id} style={{ background: '#242424', padding: '15px', borderRadius: '8px', marginBottom: '12px' }}>
+                    <h4 style={{ color: '#3498db', margin: '0 0 10px 0' }}>
+                      Giorno {history.length - i} <span style={{ fontSize: '0.8em', color: '#777' }}>({new Date(h.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})</span>
+                    </h4>
+                    <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
+                      {h.log.map((logItem, idx) => (
+                        <li key={idx} style={{ color: '#ecf0f1' }}>
+                          <strong>{logItem.name}</strong> 
+                          {logItem.votes > 0 && <span style={{ color: '#f39c12', marginLeft: '8px' }}>• {logItem.votes} Voti</span>}
+                          {logItem.isBallot && <span style={{ color: '#e74c3c', marginLeft: '8px' }}>[BALLOTTAGGIO: {logItem.ballotVotes}]</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="header-container">
-        <h2>Wherewolf - Master Dashboard</h2>
+        
+        <img src="/logo.png" alt="Wherewolf" className="header-logo" />
+
         <div className="button-group">
+          
+          <div className="timer-container">
+            <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+            <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#e74c3c' : '#ecf0f1' }}>
+              {formatTime(timerTime)}
+            </div>
+            <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+            <button className="timer-btn" style={{ marginLeft: '5px' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+              {isTimerRunning ? '⏸' : '▶️'}
+            </button>
+            <button className="timer-btn" onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>🔄</button>
+          </div>
+
           <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
             {gameStarted ? 'Ferma Partita' : 'Avvia Partita'}
           </button>
+          <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>📜 Storico</button>
           <button className="btn btn-day" onClick={resetAllVotes}>Nuovo Giorno</button>
           <button className="btn btn-danger" onClick={resetEntireGame}>Nuova Partita</button>
-          <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">Manuale</a>
         </div>
       </div>
-
-      {victoryStatus && (
-        <div className="victory-banner" style={{ backgroundColor: victoryStatus.winner === 'Villaggio' ? '#1e4620' : '#4a1515', border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}` }}>
-          <h2 style={{ margin: '0 0 10px 0', color: 'white' }}>VITTORIA: {victoryStatus.winner.toUpperCase()}!</h2>
-          <p style={{ margin: 0, fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
-        </div>
-      )}
 
       {!gameStarted && (
         <div className="form-container">
@@ -180,17 +290,16 @@ function App() {
 
       <div className="table-wrapper">
         <table className="game-table">
-          {/* NUOVO BILANCIAMENTO COLONNE (Totale 100%) */}
           <colgroup>
-            <col style={{ width: '11%' }} /> {/* Nome */}
-            <col style={{ width: '13%' }} /> {/* Ruolo */}
-            <col style={{ width: '8%' }} />  {/* Mistico (Allargato) */}
-            <col style={{ width: '13%' }} /> {/* Fazione */}
-            <col style={{ width: '13%' }} /> {/* Note */}
-            <col style={{ width: '11%' }} /> {/* Voti */}
-            <col style={{ width: '12%' }} /> {/* Ballottaggio */}
-            <col style={{ width: '9%' }} />  {/* Stato */}
-            <col style={{ width: '10%' }} /> {/* Azioni (Allargato per i bottoni) */}
+            <col style={{ width: '11%' }} /> 
+            <col style={{ width: '13%' }} /> 
+            <col style={{ width: '8%' }} />  
+            <col style={{ width: '13%' }} /> 
+            <col style={{ width: '13%' }} /> 
+            <col style={{ width: '11%' }} /> 
+            <col style={{ width: '12%' }} /> 
+            <col style={{ width: '9%' }} />  
+            <col style={{ width: '10%' }} /> 
           </colgroup>
           <thead>
             <tr>
@@ -245,17 +354,20 @@ function App() {
                   </td>
                   
                   <td data-label="Voti">
-                    {!isDead && (
+                    {!isDead ? (
                       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                         <button className="action-btn" onClick={() => decrementVote(p.id, p.votes, 'votes')}>-</button>
                         <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center' }}>{p.votes || 0}</span>
                         <button className="action-btn" onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
                       </div>
+                    ) : (
+                      <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
                     )}
                   </td>
                   
                   <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
-                    {!isDead && (
+
+                    {!isDead ? (
                       <div className="ballot-wrapper">
                         <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
                           <input type="checkbox" style={{ transform: 'scale(1.2)' }} checked={p.isBallot || false} onChange={(e) => updateField(p.id, 'isBallot', e.target.checked)} />
@@ -269,6 +381,8 @@ function App() {
                            </div>
                         )}
                       </div>
+                    ) : (
+                      <span style={{ color: '#555', fontStyle: 'italic' }}>-</span>
                     )}
                   </td>
                   
