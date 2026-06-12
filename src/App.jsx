@@ -3,6 +3,17 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { db } from './firebase';
 import { ROLE_DATA } from './roles';
+// --- IMPORTAZIONE ICONE PROFESSIONALI ---
+import {
+  Heart,
+  History,
+  Pause,
+  Play,
+  Plus,
+  RotateCcw, Skull,
+  Square, Sun, Trash2,
+  Trophy
+} from 'lucide-react';
 
 function App() {
   const [players, setPlayers] = useState([]);
@@ -12,15 +23,18 @@ function App() {
   const [masterName, setMasterName] = useState('');
   const [masterRole, setMasterRole] = useState('');
 
+  // Modals e UI States
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [lastWinner, setLastWinner] = useState(null);
 
-  const [timerTime, setTimerTime] = useState(300);
+  // Timer States
+  const [timerTime, setTimerTime] = useState(300); // Default 5 min
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const sortedRoles = Object.keys(ROLE_DATA).sort((a, b) => a.localeCompare(b));
 
+  // Fetch Players & History
   useEffect(() => {
     const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -82,6 +96,7 @@ function App() {
     }
   }, [victoryStatus?.winner]);
 
+  // --- MOTORE TIMER ---
   useEffect(() => {
     let interval;
     if (isTimerRunning && timerTime > 0) {
@@ -197,23 +212,27 @@ function App() {
   return (
     <div className="dashboard-container">
       
+      {/* POP-UP VITTORIA */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ border: `3px solid ${victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c'}`, textAlign: 'center' }}>
             <button className="close-modal-btn" onClick={() => setShowVictoryModal(false)}>×</button>
-            <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c' }}>
-              VITTORIA: {victoryStatus.winner.toUpperCase()}!
+            <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#2ecc71' : '#e74c3c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+              <Trophy size={32} /> VITTORIA: {victoryStatus.winner.toUpperCase()}!
             </h1>
             <p style={{ fontSize: '18px', color: '#ddd' }}>{victoryStatus.message}</p>
           </div>
         </div>
       )}
 
+      {/* POP-UP STORICO VOTI */}
       {showHistoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
             <button className="close-modal-btn" onClick={() => setShowHistoryModal(false)}>×</button>
-            <h2 style={{ marginTop: 0, borderBottom: '1px solid #444', paddingBottom: '10px' }}>📜 Storico Voti</h2>
+            <h2 style={{ marginTop: 0, borderBottom: '1px solid #444', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={24} /> Storico Voti
+            </h2>
             <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '10px' }}>
               {history.length === 0 ? (
                 <p style={{ color: '#aaa', fontStyle: 'italic' }}>Nessun voto registrato finora.</p>
@@ -242,39 +261,53 @@ function App() {
 
       <div className="header-container">
         
+        {/* LOGO UFFICIALE */}
         <img src="/logo.png" alt="Wherewolf" className="header-logo" />
 
         <div className="button-group">
           
+          {/* SEZIONE TIMER */}
           <div className="timer-container">
             <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
             <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#e74c3c' : '#ecf0f1' }}>
               {formatTime(timerTime)}
             </div>
             <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-            <button className="timer-btn" style={{ marginLeft: '5px' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-              {isTimerRunning ? '⏸' : '▶'}
+            <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+              {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
             </button>
-            <button className="timer-btn" onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>🔄️</button>
+            <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+              <RotateCcw size={16} />
+            </button>
           </div>
 
           <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
-            {gameStarted ? 'Ferma Partita' : 'Avvia Partita'}
+            {gameStarted ? <><Square size={18} /> Ferma Partita</> : <><Play size={18} /> Avvia Partita</>}
           </button>
-          <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>📜 Storico</button>
-          <button className="btn btn-day" onClick={resetAllVotes}>Nuovo Giorno</button>
-          <button className="btn btn-danger" onClick={resetEntireGame}>Nuova Partita</button>
+          <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
+            <History size={18} /> Storico
+          </button>
+          <button className="btn btn-day" onClick={resetAllVotes}>
+            <Sun size={18} /> Nuovo Giorno
+          </button>
+          <button className="btn btn-danger" onClick={resetEntireGame}>
+            <Trash2 size={18} /> Nuova Partita
+          </button>
         </div>
       </div>
 
       {!gameStarted && (
         <div className="form-container">
-          <h3 style={{ marginTop: 0, color: '#ecf0f1' }}>Aggiungi Giocatori alla Stanza</h3>
+          <h3 style={{ marginTop: 0, color: '#ecf0f1', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Aggiungi Giocatori alla Stanza
+          </h3>
           <form className="add-form" onSubmit={handleMasterAdd}>
             <input className="dark-input" type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ flex: 1 }}/>
             <input className="dark-input" list="role-suggestions" placeholder="Cerca ruolo..." value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
             <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
-            <button type="submit" className="btn btn-link" style={{ flex: '0 0 auto' }}>Aggiungi</button>
+            <button type="submit" className="btn btn-link">
+              <Plus size={18} /> Aggiungi
+            </button>
           </form>
         </div>
       )}
@@ -366,7 +399,6 @@ function App() {
                   </td>
                   
                   <td data-label="Ballottaggio" style={{ borderLeft: '2px solid #c0392b' }}>
-
                     {!isDead ? (
                       <div className="ballot-wrapper">
                         <label style={{ fontSize: '0.85em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
@@ -396,11 +428,11 @@ function App() {
                     <div className="actions-wrapper">
                       {gameStarted ? (
                         <button onClick={() => toggleStatus(p.id, p.status)} className="action-btn" title={isDead ? "Resuscita" : "Uccidi"}>
-                          {isDead ? '💖' : '💀'}
+                          {isDead ? <Heart size={18} color="#e74c3c" /> : <Skull size={18} />}
                         </button>
                       ) : (
                         <button onClick={() => removePlayer(p.id)} className="action-btn" style={{ borderColor: 'transparent', background: 'transparent' }} title="Elimina Giocatore">
-                          🗑️
+                          <Trash2 size={20} color="#e74c3c" />
                         </button>
                       )}
                     </div>
