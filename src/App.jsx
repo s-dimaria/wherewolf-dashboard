@@ -21,8 +21,8 @@ import { ROLE_DATA } from './roles';
 const GAME_MODES = ["Una Luna", "Una + Due Lune", "Darkest Night", "Cappuccetto Rosso"];
 
 const MANUALS = {
-  "Una Luna": "/Revised.pdf",
-  "Una + Due Lune": "/Revised.pdf",
+  "Una Luna": "/One Moon.pdf",
+  "Una + Due Lune": "/Two Moons.pdf",
   "Darkest Night": "/Darkest Night.pdf",
   "Cappuccetto Rosso": "/Red Riding Hood.pdf"
 };
@@ -33,18 +33,23 @@ const CANTILENA = {
     nottiSuccessive: ["Veggente", "Medium", "Mago", "Lupi Mannari", "Guaritore"]
   },
   "Una + Due Lune": {
-    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di vampiri", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
+    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di Vampiri", "Prete", "Giulietta", "Angelo Custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
     nottiSuccessive: ["Veggente", "Medium", "Mago", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Guaritore"]
   },
   "Darkest Night": {
-    primaNotte: ["Veggente", "Mago", "Inquisizione", "Criminali", "Guardie", "Monaco", "Bracconiere", "Cacciatore di vampiri", "Becchino", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Lupo Solitario", "Vampiro", "Nosferatu", "Negromante", "Posseduto", "Guaritore"],
+    primaNotte: ["Veggente", "Mago", "Inquisizione", "Criminali", "Guardie", "Monaco", "Bracconiere", "Cacciatore di Vampiri", "Becchino", "Prete", "Giulietta", "Angelo Custode", "L'amuleto e la spada", "Lupi del branco", "Lupo Solitario", "Vampiro", "Nosferatu", "Negromante", "Posseduto", "Guaritore"],
     nottiSuccessive: ["Veggente", "Medium", "Mago", "Strega", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Nosferatu", "Guaritore", "Posseduto"]
   },
   "Cappuccetto Rosso": {
-    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di vampiri", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
+    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di Vampiri", "Prete", "Giulietta", "Angelo Custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
     nottiSuccessive: ["Veggente", "Medium", "Mago", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Guaritore"]
   }
 };
+
+// --- LISTE RUOLI PER ESPANSIONE ---
+const EXP_DUE_LUNE = ["Azzeccagarbugli", "Bocca di Rosa", "Borgomastro", "Mercante", "Oratore", "Assassino", "Capo Gilda", "Guardia Corrotta", "Ladra", "Spia", "Angelo Custode", "Giulietta", "Vampiro", "Ghoul", "Cacciatore di Vampiri"];
+const EXP_DARKEST = ["Inquisitore", "Boia", "Templare", "Appestato", "Becchino", "Bracconiere", "Mostro", "Lupo Reietto", "Lupo Solitario", "Nosferatu", "Negromante", "Posseduto", "Megera", "Fantasma", "Presenza", "Spettro", "Viaggiatore"];
+const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna", "Lupo (Cappuccetto)"];
 
 function App() {
   const [players, setPlayers] = useState([]);
@@ -69,13 +74,30 @@ function App() {
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  const sortedRoles = Object.keys(ROLE_DATA).sort((a, b) => a.localeCompare(b));
+  // --- FILTRO DINAMICO RUOLI ---
+  const getFilteredRoles = () => {
+    const allRoles = Object.keys(ROLE_DATA);
+    let available = allRoles;
+
+    if (gameMode === "Una Luna") {
+      available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    } else if (gameMode === "Una + Due Lune") {
+      available = allRoles.filter(r => !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    } else if (gameMode === "Darkest Night") {
+      available = allRoles.filter(r => !EXP_RED_HOOD.includes(r));
+    } else if (gameMode === "Cappuccetto Rosso") {
+      available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r));
+    }
+
+    return available.sort((a, b) => a.localeCompare(b));
+  };
+
+  const sortedRoles = getFilteredRoles();
 
   // Fetch Players & History
   useEffect(() => {
     const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      // Non li ordiniamo più per nome ma per ordine di inserimento (createdAt)
       setPlayers(playersData.sort((a, b) => a.createdAt - b.createdAt));
     });
 
@@ -167,7 +189,7 @@ function App() {
       votes: 0,          
       ballotVotes: 0,    
       isBallot: false,
-      createdAt: Date.now()
+      createdAt: Date.now() 
     });
     setMasterName(''); 
     setMasterRole(''); 
@@ -231,7 +253,7 @@ function App() {
         setGameStarted(false);
         setTimerTime(300);
         setIsTimerRunning(false);
-        setGameMode(null);
+        setGameMode(null); 
       } catch (error) {
         console.error("Errore nello svuotamento partita: ", error);
       }
@@ -246,7 +268,6 @@ function App() {
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
   const eligibleBallotVotersCount = alivePlayersList.filter(p => !(p.isBallot && p.fazione !== 'Città')).length;
 
-  // --- SELEZIONE MODALITA' INIZIALE ---
   if (!gameMode) {
     return (
       <div className="mode-selection-overlay">
@@ -266,7 +287,6 @@ function App() {
   return (
     <div className="dashboard-container">
       
-      {/* FAB BOTTOM SHEET (MOBILE) */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
           <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
@@ -293,7 +313,6 @@ function App() {
         </div>
       )}
 
-      {/* POP-UP CANTILENA */}
       {showCantilenaModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -318,7 +337,6 @@ function App() {
         </div>
       )}
 
-      {/* ALTRI POP-UP (Vittoria e Storico) */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }}>
@@ -349,7 +367,7 @@ function App() {
                     </h4>
                     <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
                       {h.log.map((logItem, idx) => (
-                        <li key={idx} style={{ color: '#c4c4c4' }}>
+                        <li key={idx} style={{ color: '#c4c4c4', listStyleType: 'none'}}>
                           <strong>{logItem.name} - {logItem.role}</strong> 
                           {logItem.votes > 0 && <span style={{ color: '#d97706', marginLeft: '8px' }}>• {logItem.votes} Voti</span>}
                           {logItem.isBallot && <span style={{ color: '#dc2626', marginLeft: '8px' }}>[BALLOTTAGGIO: {logItem.ballotVotes}]</span>}
