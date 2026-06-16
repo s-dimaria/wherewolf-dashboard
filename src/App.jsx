@@ -2,7 +2,9 @@ import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc, writ
 import {
   BookOpen,
   DoorOpen,
-  Eye, Heart, History, Moon, Pause, Play, Plus, RotateCcw,
+  Eye, Heart, History,
+  Menu,
+  Moon, Pause, Play, Plus, RotateCcw,
   Skull, Square, Sun, Trash2, Trophy,
   Users
 } from 'lucide-react';
@@ -42,10 +44,9 @@ const CANTILENA = {
 
 const EXP_DUE_LUNE = ["Guardia", "Altra Guardia", "Azzeccagarbugli", "Bocca di Rosa", "Borgomastro", "Mercante", "Oratore", "Assassino", "Capo Gilda", "Guardia Corrotta", "Ladra", "Spia", "Angelo Custode", "Giulietta", "Vampiro", "Ghoul", "Cacciatore di Vampiri"];
 const EXP_DARKEST = ["Inquisitore", "Boia", "Templare", "Appestato", "Becchino", "Bracconiere", "Mostro", "Lupo Reietto", "Lupo Solitario", "Nosferatu", "Negromante", "Posseduto", "Megera", "Fantasma", "Presenza", "Spettro", "Viaggiatore"];
-const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna"];
+const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna", "Lupo (Cappuccetto)"];
 
 function App() {
-  // Stanze e Multi-Master
   const [roomCode, setRoomCode] = useState(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
 
@@ -62,6 +63,7 @@ function App() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showCantilenaModal, setShowCantilenaModal] = useState(false);
   const [showFabModal, setShowFabModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
@@ -69,18 +71,15 @@ function App() {
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // 1. Controllo URL Iniziale per unire automaticamente
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
     if (room) setRoomCode(room.toUpperCase());
   }, []);
 
-  // 2. Ascolto del Database legato alla STANZA corrente
   useEffect(() => {
     if (!roomCode) return;
 
-    // Sincronizza lo stato generale della stanza (Modalità e Partita Iniziata)
     const roomRef = doc(db, 'rooms', roomCode);
     const unsubRoom = onSnapshot(roomRef, (snapshot) => {
       if (snapshot.exists()) {
@@ -90,14 +89,12 @@ function App() {
       }
     });
 
-    // Sincronizza i giocatori di questa specifica stanza
     const playersRef = collection(db, 'rooms', roomCode, 'players');
     const unsubPlayers = onSnapshot(playersRef, (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPlayers(playersData.sort((a, b) => a.createdAt - b.createdAt));
     });
 
-    // Sincronizza lo storico di questa specifica stanza
     const historyRef = collection(db, 'rooms', roomCode, 'history');
     const unsubHistory = onSnapshot(historyRef, (snapshot) => {
       const historyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -107,7 +104,6 @@ function App() {
     return () => { unsubRoom(); unsubPlayers(); unsubHistory(); };
   }, [roomCode]);
 
-  // --- FUNZIONI LOBBY E STANZE ---
   const createRoom = async () => {
     const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
     await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
@@ -122,12 +118,22 @@ function App() {
     setRoomCode(code);
   };
 
-  const exitRoom = () => {
-    if(window.confirm("Sei sicuro di voler uscire dalla stanza? I dati rimarranno salvati sul server.")) {
-      setRoomCode(null);
-      setGameMode(null);
-      setGameStarted(false);
-      window.history.pushState({}, '', window.location.pathname);
+  const exitRoom = async () => {
+    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA eliminando tutti i giocatori e lo storico per sempre.")) {
+      try {
+        const batch = writeBatch(db);
+        players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
+        history.forEach((h) => batch.delete(doc(db, 'rooms', roomCode, 'history', h.id)));
+        batch.delete(doc(db, 'rooms', roomCode));
+        await batch.commit();
+
+        setRoomCode(null);
+        setGameMode(null);
+        setGameStarted(false);
+        window.history.pushState({}, '', window.location.pathname);
+      } catch (error) {
+        console.error("Errore nell'uscita: ", error);
+      }
     }
   };
 
@@ -139,7 +145,6 @@ function App() {
     await setDoc(doc(db, 'rooms', roomCode), { gameStarted: !gameStarted }, { merge: true });
   };
 
-  // --- LOGICA GIOCO E DATI ---
   const getFilteredRoles = () => {
     const allRoles = Object.keys(ROLE_DATA);
     let available = allRoles;
@@ -237,7 +242,6 @@ function App() {
     }
   };
 
-  // NUOVA PARTITA: Svuota i giocatori e lo storico, rimani nella stanza
   const resetEntireGame = async () => {
     if(window.confirm("⚠️ ATTENZIONE: Questa azione svuoterà i giocatori e lo storico per ricominciare da capo in questa stanza. Procedere?")) {
       try {
@@ -246,7 +250,6 @@ function App() {
         history.forEach((h) => batch.delete(doc(db, 'rooms', roomCode, 'history', h.id)));
         batch.update(doc(db, 'rooms', roomCode), { gameStarted: false, gameMode: null });
         await batch.commit();
-
         setTimerTime(300);
         setIsTimerRunning(false);
       } catch (error) {
@@ -263,7 +266,6 @@ function App() {
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
   const eligibleBallotVotersCount = alivePlayersList.filter(p => !(p.isBallot && p.fazione !== 'Città')).length;
 
-  // --- RENDER LOBBY INIZIALE ---
   if (!roomCode) {
     return (
       <div className="lobby-overlay">
@@ -272,9 +274,7 @@ function App() {
           <button className="btn btn-start" style={{ width: '100%', fontSize: '1.1em', padding: '15px' }} onClick={createRoom}>
             <Plus size={20} /> Crea Nuova Stanza
           </button>
-          
           <div className="lobby-divider"><span>OPPURE</span></div>
-          
           <input className="lobby-input" type="text" placeholder="CODICE" maxLength={5} value={joinCodeInput} onChange={e => setJoinCodeInput(e.target.value)} />
           <button className="btn btn-secondary" style={{ width: '100%', fontSize: '1.1em', padding: '15px', color: '#fff' }} onClick={joinRoom}>
             <Users size={20} /> Unisciti a Stanza
@@ -284,7 +284,6 @@ function App() {
     );
   }
 
-  // --- RENDER SELEZIONE MODALITA' ---
   if (!gameMode) {
     return (
       <div className="mode-selection-overlay">
@@ -301,10 +300,10 @@ function App() {
     );
   }
 
-  // --- RENDER DASHBOARD PRINCIPALE ---
   return (
     <div className="dashboard-container">
       
+      {/* MODAL BOTTOM SHEET MOBILE (Stato) */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
           <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
@@ -331,6 +330,33 @@ function App() {
         </div>
       )}
 
+      {/* MODAL MENU HAMBURGER (Mobile) */}
+      {showMobileMenu && (
+        <div className="modal-overlay" onClick={() => setShowMobileMenu(false)}>
+          <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 15px 0', borderBottom: '1px solid #333', paddingBottom: '10px', color: '#c4c4c4' }}>Opzioni Partita</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => { toggleGameStarted(); setShowMobileMenu(false); }}>
+                {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
+              </button>
+              <button className="btn btn-secondary" onClick={() => { setShowHistoryModal(true); setShowMobileMenu(false); }}>
+                <History size={16} /> Storico
+              </button>
+              <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link">
+                <BookOpen size={16} /> Manuale
+              </a>
+              <button className="btn btn-danger" onClick={() => { resetEntireGame(); setShowMobileMenu(false); }}>
+                <Trash2 size={16} /> Nuova Partita
+              </button>
+              <button className="btn btn-secondary" onClick={exitRoom} style={{ backgroundColor: '#1a1a1a', borderColor: '#333', color: '#f87171' }}>
+                <DoorOpen size={16} /> Esci e Distruggi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP CANTILENA */}
       {showCantilenaModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -338,12 +364,10 @@ function App() {
             <h2 style={{ marginTop: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Moon size={24} /> Fase Notturna ({gameMode})
             </h2>
-            
             <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
               <button className={`btn ${cantilenaTab === 'primaNotte' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('primaNotte')}>La Prima Notte</button>
               <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
             </div>
-
             <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px' }}>
               <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '25px' }}>
                 {CANTILENA[gameMode][cantilenaTab].map((ruolo, idx) => (
@@ -355,6 +379,7 @@ function App() {
         </div>
       )}
 
+      {/* POP-UP VITTORIA */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }}>
@@ -367,6 +392,7 @@ function App() {
         </div>
       )}
 
+      {/* POP-UP STORICO */}
       {showHistoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -385,7 +411,7 @@ function App() {
                     </h4>
                     <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
                       {h.log.map((logItem, idx) => (
-                        <li key={idx} style={{ color: '#c4c4c4', listStyleType: 'none'}}>
+                        <li key={idx} style={{ color: '#c4c4c4', listStyleType: 'none', padding: '5px 0', borderBottom: '1px solid #222'}}>
                           <strong>{logItem.name} - {logItem.role}</strong> 
                           {logItem.votes > 0 && <span style={{ color: '#d97706', marginLeft: '8px' }}>• {logItem.votes} Voti</span>}
                           {logItem.isBallot && <span style={{ color: '#dc2626', marginLeft: '8px' }}>[BALLOTTAGGIO: {logItem.ballotVotes}]</span>}
@@ -400,6 +426,7 @@ function App() {
         </div>
       )}
 
+      {/* HEADER DESKTOP / MOBILE */}
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
 
@@ -418,14 +445,14 @@ function App() {
                 <RotateCcw size={16} />
               </button>
             </div>
+          </div>
 
+          {/* CONTROLLI VISIBILI SOLO SU DESKTOP */}
+          <div className="button-row desktop-only">
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
             </button>
             <button className="btn btn-day" onClick={resetAllVotes}><Sun size={16} /> Nuovo Giorno</button>
-          </div>
-
-          <div className="button-row">
             <button className="btn btn-danger" onClick={resetEntireGame} title="Svuota stanza e cancella lo storico">
               <Trash2 size={16} /> Nuova Partita
             </button>
@@ -565,9 +592,25 @@ function App() {
         </div>
       )}
 
-      <button className="fab-button" onClick={() => setShowFabModal(true)}>
-        <Eye size={24} />
-      </button>
+      {/* BOTTOM NAV BAR (MOBILE) */}
+      <div className="bottom-nav-bar">
+        <button className="bottom-nav-item" onClick={() => setShowFabModal(true)}>
+          <Eye size={20} />
+          <span>Stato</span>
+        </button>
+        <button className="bottom-nav-item" onClick={resetAllVotes}>
+          <Sun size={20} />
+          <span>Giorno</span>
+        </button>
+        <button className="bottom-nav-item" onClick={() => setShowCantilenaModal(true)}>
+          <Moon size={20} />
+          <span>Notte</span>
+        </button>
+        <button className="bottom-nav-item" onClick={() => setShowMobileMenu(true)}>
+          <Menu size={20} />
+          <span>Menù</span>
+        </button>
+      </div>
 
     </div>
   );
