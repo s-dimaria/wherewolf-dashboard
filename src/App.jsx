@@ -167,7 +167,7 @@ function App() {
       votes: 0,          
       ballotVotes: 0,    
       isBallot: false,
-      createdAt: Date.now() // Fondamentale per mantenere l'ordine al tavolo
+      createdAt: Date.now()
     });
     setMasterName(''); 
     setMasterRole(''); 
@@ -190,18 +190,32 @@ function App() {
     if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
       try {
         const dayLog = players
-          .filter(p => p.votes > 0 || p.ballotVotes > 0 || p.isBallot)
+          .filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true))
           .map(p => ({
-            name: p.name, role: p.role, votes: p.votes, ballotVotes: p.ballotVotes, isBallot: p.isBallot
+            name: p.name || 'Ignoto',
+            role: p.role || 'Ignoto',
+            votes: p.votes || 0,
+            ballotVotes: p.ballotVotes || 0,
+            isBallot: p.isBallot || false
           }));
-        if (dayLog.length > 0) await addDoc(collection(db, 'history'), { date: new Date().toISOString(), log: dayLog });
+
+        if (dayLog.length > 0) {
+          await addDoc(collection(db, 'history'), { 
+            date: new Date().toISOString(), 
+            log: dayLog 
+          });
+        }
 
         const batch = writeBatch(db);
-        players.forEach((p) => batch.update(doc(db, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
+        players.forEach((p) => {
+          const playerRef = doc(db, 'players', p.id);
+          batch.update(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
+        });
         await batch.commit();
+
       } catch (error) {
         console.error("Errore nel reset dei voti: ", error);
-        alert("Si è verificato un errore durante il reset. Riprova.");
+        alert("Si è verificato un errore durante il reset: " + error.message);
       }
     }
   };
@@ -336,7 +350,7 @@ function App() {
                     <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
                       {h.log.map((logItem, idx) => (
                         <li key={idx} style={{ color: '#c4c4c4' }}>
-                          <strong>{logItem.name}</strong> 
+                          <strong>{logItem.name} - {logItem.role}</strong> 
                           {logItem.votes > 0 && <span style={{ color: '#d97706', marginLeft: '8px' }}>• {logItem.votes} Voti</span>}
                           {logItem.isBallot && <span style={{ color: '#dc2626', marginLeft: '8px' }}>[BALLOTTAGGIO: {logItem.ballotVotes}]</span>}
                         </li>
