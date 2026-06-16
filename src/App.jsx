@@ -1,16 +1,10 @@
-import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import {
   BookOpen,
-  Eye,
-  Heart,
-  History,
-  Moon,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw, Skull,
-  Square, Sun, Trash2,
-  Trophy
+  DoorOpen,
+  Eye, Heart, History, Moon, Pause, Play, Plus, RotateCcw,
+  Skull, Square, Sun, Trash2, Trophy,
+  Users
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import './App.css';
@@ -46,17 +40,18 @@ const CANTILENA = {
   }
 };
 
-// --- LISTE RUOLI PER ESPANSIONE ---
 const EXP_DUE_LUNE = ["Guardia", "Altra Guardia", "Azzeccagarbugli", "Bocca di Rosa", "Borgomastro", "Mercante", "Oratore", "Assassino", "Capo Gilda", "Guardia Corrotta", "Ladra", "Spia", "Angelo Custode", "Giulietta", "Vampiro", "Ghoul", "Cacciatore di Vampiri"];
 const EXP_DARKEST = ["Inquisitore", "Boia", "Templare", "Appestato", "Becchino", "Bracconiere", "Mostro", "Lupo Reietto", "Lupo Solitario", "Nosferatu", "Negromante", "Posseduto", "Megera", "Fantasma", "Presenza", "Spettro", "Viaggiatore"];
 const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna"];
 
 function App() {
+  // Stanze e Multi-Master
+  const [roomCode, setRoomCode] = useState(null);
+  const [joinCodeInput, setJoinCodeInput] = useState('');
+
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
-  
-  // Modalità di Gioco Principale
   const [gameMode, setGameMode] = useState(null);
 
   const [masterName, setMasterName] = useState('');
@@ -70,47 +65,92 @@ function App() {
   const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
-  // Timer States
+  // Timer
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // --- FILTRO DINAMICO RUOLI ---
-  const getFilteredRoles = () => {
-    const allRoles = Object.keys(ROLE_DATA);
-    let available = allRoles;
-
-    if (gameMode === "Una Luna") {
-      available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
-    } else if (gameMode === "Una + Due Lune") {
-      available = allRoles.filter(r => !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
-    } else if (gameMode === "Darkest Night") {
-      available = allRoles.filter(r => !EXP_RED_HOOD.includes(r));
-    } else if (gameMode === "Cappuccetto Rosso") {
-      available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r));
-    }
-
-    return available.sort((a, b) => a.localeCompare(b));
-  };
-
-  const sortedRoles = getFilteredRoles();
-
-  // Fetch Players & History
+  // 1. Controllo URL Iniziale per unire automaticamente
   useEffect(() => {
-    const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    if (room) setRoomCode(room.toUpperCase());
+  }, []);
+
+  // 2. Ascolto del Database legato alla STANZA corrente
+  useEffect(() => {
+    if (!roomCode) return;
+
+    // Sincronizza lo stato generale della stanza (Modalità e Partita Iniziata)
+    const roomRef = doc(db, 'rooms', roomCode);
+    const unsubRoom = onSnapshot(roomRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setGameMode(data.gameMode || null);
+        setGameStarted(data.gameStarted || false);
+      }
+    });
+
+    // Sincronizza i giocatori di questa specifica stanza
+    const playersRef = collection(db, 'rooms', roomCode, 'players');
+    const unsubPlayers = onSnapshot(playersRef, (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setPlayers(playersData.sort((a, b) => a.createdAt - b.createdAt));
     });
 
-    const unsubHistory = onSnapshot(collection(db, 'history'), (snapshot) => {
+    // Sincronizza lo storico di questa specifica stanza
+    const historyRef = collection(db, 'rooms', roomCode, 'history');
+    const unsubHistory = onSnapshot(historyRef, (snapshot) => {
       const historyData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setHistory(historyData.sort((a, b) => new Date(b.date) - new Date(a.date)));
     });
 
-    return () => {
-      unsubPlayers();
-      unsubHistory();
-    };
-  }, []);
+    return () => { unsubRoom(); unsubPlayers(); unsubHistory(); };
+  }, [roomCode]);
+
+  // --- FUNZIONI LOBBY E STANZE ---
+  const createRoom = async () => {
+    const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
+    window.history.pushState({}, '', `?room=${newCode}`);
+    setRoomCode(newCode);
+  };
+
+  const joinRoom = () => {
+    if (joinCodeInput.trim().length !== 5) return alert("Il codice deve essere di 5 caratteri esatti!");
+    const code = joinCodeInput.trim().toUpperCase();
+    window.history.pushState({}, '', `?room=${code}`);
+    setRoomCode(code);
+  };
+
+  const exitRoom = () => {
+    if(window.confirm("Sei sicuro di voler uscire dalla stanza? I dati rimarranno salvati sul server.")) {
+      setRoomCode(null);
+      setGameMode(null);
+      setGameStarted(false);
+      window.history.pushState({}, '', window.location.pathname);
+    }
+  };
+
+  const handleSetGameMode = async (mode) => {
+    await setDoc(doc(db, 'rooms', roomCode), { gameMode: mode }, { merge: true });
+  };
+
+  const toggleGameStarted = async () => {
+    await setDoc(doc(db, 'rooms', roomCode), { gameStarted: !gameStarted }, { merge: true });
+  };
+
+  // --- LOGICA GIOCO E DATI ---
+  const getFilteredRoles = () => {
+    const allRoles = Object.keys(ROLE_DATA);
+    let available = allRoles;
+    if (gameMode === "Una Luna") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Una + Due Lune") available = allRoles.filter(r => !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Darkest Night") available = allRoles.filter(r => !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Cappuccetto Rosso") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r));
+    return available.sort((a, b) => a.localeCompare(b));
+  };
+
+  const sortedRoles = getFilteredRoles();
 
   const checkVictory = () => {
     if (!gameStarted) return null;
@@ -131,13 +171,10 @@ function App() {
     const aliveLupi = alivePlayers.filter(p => p.fazione === "Lupi del Branco" || ROLE_DATA[p.role]?.isWolf).length;
     
     if (aliveOmbra === 0) return { winner: 'Villaggio', message: 'La minaccia dell\'Ombra è stata debellata! Vittoria degli Uomini.' };
-    
     const aliveNonLupi = alivePlayers.length - aliveLupi;
     if (aliveNonLupi <= aliveLupi && aliveVampiri === 0) return { winner: 'Lupi', message: 'I Lupi e i loro alleati hanno raggiunto la parità numerica. Vittoria dei Lupi!' };
-
     const aliveNonVampiri = alivePlayers.length - aliveVampiri;
     if (aliveNonVampiri <= aliveVampiri && aliveVampiri > 0) return { winner: 'Vampiro', message: 'Il Vampiro e le sue Progenie dominano la notte. Vittoria dei Vampiri!' };
-
     return null;
   };
 
@@ -155,12 +192,8 @@ function App() {
   useEffect(() => {
     let interval;
     if (isTimerRunning && timerTime > 0) {
-      interval = setInterval(() => {
-        setTimerTime((prev) => prev - 1);
-      }, 1000);
-    } else if (timerTime <= 0 && isTimerRunning) {
-      setIsTimerRunning(false);
-    }
+      interval = setInterval(() => setTimerTime((prev) => prev - 1), 1000);
+    } else if (timerTime <= 0 && isTimerRunning) setIsTimerRunning(false);
     return () => clearInterval(interval);
   }, [isTimerRunning, timerTime]);
 
@@ -170,90 +203,52 @@ function App() {
     return `${m}:${s}`;
   };
 
-  const adjustTimer = (val) => {
-    if (!isTimerRunning) setTimerTime((prev) => Math.max(0, prev + val));
-  };
+  const adjustTimer = (val) => { if (!isTimerRunning) setTimerTime((prev) => Math.max(0, prev + val)); };
 
   const handleMasterAdd = async (e) => {
     e.preventDefault();
-    if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) {
-      alert("Inserisci un nome e seleziona un ruolo valido dalla lista!");
-      return;
-    }
-    await addDoc(collection(db, 'players'), {
-      name: masterName,
-      role: masterRole,
-      fazione: ROLE_DATA[masterRole].fazione,
-      status: 'vivo',
-      notes: '',
-      votes: 0,          
-      ballotVotes: 0,    
-      isBallot: false,
-      createdAt: Date.now() 
+    if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) return alert("Inserisci un nome e un ruolo valido!");
+    await addDoc(collection(db, 'rooms', roomCode, 'players'), {
+      name: masterName, role: masterRole, fazione: ROLE_DATA[masterRole].fazione,
+      status: 'vivo', notes: '', votes: 0, ballotVotes: 0, isBallot: false, createdAt: Date.now() 
     });
-    setMasterName(''); 
-    setMasterRole(''); 
+    setMasterName(''); setMasterRole(''); 
   };
 
-  const updateField = async (id, field, value) => {
-    await updateDoc(doc(db, 'players', id), { [field]: value });
-  };
-
+  const updateField = async (id, field, value) => await updateDoc(doc(db, 'rooms', roomCode, 'players', id), { [field]: value });
   const incrementVote = async (id, currentVotes, field) => updateField(id, field, (currentVotes || 0) + 1);
-  const decrementVote = async (id, currentVotes, field) => {
-    if (currentVotes > 0) updateField(id, field, currentVotes - 1);
-  };
-  const toggleStatus = async (id, currentStatus) => {
-    updateField(id, 'status', currentStatus === 'vivo' ? 'morto' : 'vivo');
-  };
-  const removePlayer = async (id) => await deleteDoc(doc(db, 'players', id));
+  const decrementVote = async (id, currentVotes, field) => { if (currentVotes > 0) updateField(id, field, currentVotes - 1); };
+  const toggleStatus = async (id, currentStatus) => updateField(id, 'status', currentStatus === 'vivo' ? 'morto' : 'vivo');
+  const removePlayer = async (id) => await deleteDoc(doc(db, 'rooms', roomCode, 'players', id));
 
   const resetAllVotes = async () => {
     if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
       try {
-        const dayLog = players
-          .filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true))
-          .map(p => ({
-            name: p.name || 'Ignoto',
-            role: p.role || 'Ignoto',
-            votes: p.votes || 0,
-            ballotVotes: p.ballotVotes || 0,
-            isBallot: p.isBallot || false
-          }));
-
-        if (dayLog.length > 0) {
-          await addDoc(collection(db, 'history'), { 
-            date: new Date().toISOString(), 
-            log: dayLog 
-          });
-        }
-
+        const dayLog = players.filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true)).map(p => ({
+            name: p.name || 'Ignoto', role: p.role || 'Ignoto', votes: p.votes || 0, ballotVotes: p.ballotVotes || 0, isBallot: p.isBallot || false
+        }));
+        if (dayLog.length > 0) await addDoc(collection(db, 'rooms', roomCode, 'history'), { date: new Date().toISOString(), log: dayLog });
         const batch = writeBatch(db);
-        players.forEach((p) => {
-          const playerRef = doc(db, 'players', p.id);
-          batch.update(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
-        });
+        players.forEach((p) => batch.update(doc(db, 'rooms', roomCode, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
         await batch.commit();
-
       } catch (error) {
-        console.error("Errore nel reset dei voti: ", error);
-        alert("Si è verificato un errore durante il reset: " + error.message);
+        alert("Errore durante il reset: " + error.message);
       }
     }
   };
 
+  // NUOVA PARTITA: Svuota i giocatori e lo storico, rimani nella stanza
   const resetEntireGame = async () => {
-    if(window.confirm("⚠️ ATTENZIONE: Svuotare l'intera stanza e cancellare lo storico?")) {
+    if(window.confirm("⚠️ ATTENZIONE: Questa azione svuoterà i giocatori e lo storico per ricominciare da capo in questa stanza. Procedere?")) {
       try {
         const batch = writeBatch(db);
-        players.forEach((p) => batch.delete(doc(db, 'players', p.id)));
-        history.forEach((h) => batch.delete(doc(db, 'history', h.id)));
+        players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
+        history.forEach((h) => batch.delete(doc(db, 'rooms', roomCode, 'history', h.id)));
+        batch.update(doc(db, 'rooms', roomCode), { gameStarted: false, gameMode: null });
         await batch.commit();
 
-        setGameStarted(false);
         setTimerTime(300);
         setIsTimerRunning(false);
-        setGameMode(null); 
       } catch (error) {
         console.error("Errore nello svuotamento partita: ", error);
       }
@@ -268,22 +263,45 @@ function App() {
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
   const eligibleBallotVotersCount = alivePlayersList.filter(p => !(p.isBallot && p.fazione !== 'Città')).length;
 
+  // --- RENDER LOBBY INIZIALE ---
+  if (!roomCode) {
+    return (
+      <div className="lobby-overlay">
+        <img src="/logo.png?v=3" alt="Wherewolf" className="lobby-logo" />
+        <div className="lobby-box">
+          <button className="btn btn-start" style={{ width: '100%', fontSize: '1.1em', padding: '15px' }} onClick={createRoom}>
+            <Plus size={20} /> Crea Nuova Stanza
+          </button>
+          
+          <div className="lobby-divider"><span>OPPURE</span></div>
+          
+          <input className="lobby-input" type="text" placeholder="CODICE" maxLength={5} value={joinCodeInput} onChange={e => setJoinCodeInput(e.target.value)} />
+          <button className="btn btn-secondary" style={{ width: '100%', fontSize: '1.1em', padding: '15px', color: '#fff' }} onClick={joinRoom}>
+            <Users size={20} /> Unisciti a Stanza
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // --- RENDER SELEZIONE MODALITA' ---
   if (!gameMode) {
     return (
       <div className="mode-selection-overlay">
         <img src="/logo.png?v=3" alt="Wherewolf" className="mode-logo" />
-        <h2 style={{ color: '#c4c4c4', marginBottom: '30px', fontWeight: 'normal' }}>Seleziona la Modalità di Gioco</h2>
+        <h2 style={{ color: '#c4c4c4', marginBottom: '30px', fontWeight: 'normal' }}>
+          Stanza <span className="room-badge">{roomCode}</span> - Seleziona Modalità
+        </h2>
         <div className="mode-grid">
           {GAME_MODES.map(mode => (
-            <div key={mode} className="mode-card" onClick={() => setGameMode(mode)}>
-              {mode}
-            </div>
+            <div key={mode} className="mode-card" onClick={() => handleSetGameMode(mode)}>{mode}</div>
           ))}
         </div>
       </div>
     );
   }
 
+  // --- RENDER DASHBOARD PRINCIPALE ---
   return (
     <div className="dashboard-container">
       
@@ -388,6 +406,7 @@ function App() {
         <div className="button-group">
           
           <div className="button-row">
+            <span className="room-badge" style={{ display: 'flex', alignItems: 'center' }}>STANZA: {roomCode}</span>
             <div className="timer-container">
               <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
               <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
@@ -400,14 +419,16 @@ function App() {
               </button>
             </div>
 
-            <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
+            <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
             </button>
             <button className="btn btn-day" onClick={resetAllVotes}><Sun size={16} /> Nuovo Giorno</button>
-            <button className="btn btn-danger" onClick={resetEntireGame}><Trash2 size={16} /> Nuova Partita</button>
           </div>
 
           <div className="button-row">
+            <button className="btn btn-danger" onClick={resetEntireGame} title="Svuota stanza e cancella lo storico">
+              <Trash2 size={16} /> Nuova Partita
+            </button>
             <button className="btn btn-night" onClick={() => setShowCantilenaModal(true)}>
               <Moon size={16} /> Fase Notturna
             </button>
@@ -415,8 +436,11 @@ function App() {
               <History size={16} /> Storico
             </button>
             <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link">
-              <BookOpen size={16} /> Manuale ({gameMode})
+              <BookOpen size={16} /> Manuale
             </a>
+            <button className="btn btn-secondary" onClick={exitRoom} style={{ backgroundColor: '#1a1a1a', borderColor: '#333' }}>
+              <DoorOpen size={16} /> Esci
+            </button>
           </div>
 
         </div>
@@ -541,7 +565,6 @@ function App() {
         </div>
       )}
 
-      {/* BOTTONE FLOATING PER MOBILE */}
       <button className="fab-button" onClick={() => setShowFabModal(true)}>
         <Eye size={24} />
       </button>
