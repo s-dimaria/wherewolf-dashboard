@@ -1,18 +1,19 @@
+// ==========================================
+// IMPORTS
+// ==========================================
 import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import {
-  BookOpen,
-  DoorOpen,
-  Eye, Heart, History,
-  Menu,
-  Moon, Pause, Play, Plus, RotateCcw,
-  Skull, Square, Sun, Trash2, Trophy,
-  Users
+  BookOpen, DoorOpen, Eye, Heart, History, Menu, Moon, Pause, Play, Plus, RotateCcw,
+  Skull, Square, Sun, Trash2, Trophy, Users
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import './App.css';
 import { db } from './firebase';
 import { ROLE_DATA } from './roles';
 
+// ==========================================
+// COSTANTI E CONFIGURAZIONI GIOCO
+// ==========================================
 const GAME_MODES = ["Una Luna", "Una + Due Lune", "Darkest Night", "Cappuccetto Rosso"];
 
 const MANUALS = {
@@ -45,18 +46,26 @@ const EXP_DUE_LUNE = ["Guardia", "Altra Guardia", "Azzeccagarbugli", "Bocca di R
 const EXP_DARKEST = ["Inquisitore", "Boia", "Templare", "Appestato", "Becchino", "Bracconiere", "Mostro", "Lupo Reietto", "Lupo Solitario", "Nosferatu", "Negromante", "Posseduto", "Megera", "Fantasma", "Presenza", "Spettro", "Viaggiatore"];
 const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna", "Lupo (Cappuccetto)"];
 
-function App() {
+export default function App() {
+  // ==========================================
+  // STATI: STANZE E MODALITA'
+  // ==========================================
   const [roomCode, setRoomCode] = useState(null);
   const [joinCodeInput, setJoinCodeInput] = useState('');
+  const [gameMode, setGameMode] = useState(null);
+  const [gameStarted, setGameStarted] = useState(false);
 
+  // ==========================================
+  // STATI: DATI PARTITA
+  // ==========================================
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameMode, setGameMode] = useState(null);
-
   const [masterName, setMasterName] = useState('');
   const [masterRole, setMasterRole] = useState('');
 
+  // ==========================================
+  // STATI: UI E POP-UP
+  // ==========================================
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showCantilenaModal, setShowCantilenaModal] = useState(false);
@@ -65,9 +74,15 @@ function App() {
   const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
+  // ==========================================
+  // STATI: TIMER
+  // ==========================================
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
+  // ==========================================
+  // EFFETTI: URL E CONNESSIONE DATABASE
+  // ==========================================
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
@@ -101,76 +116,9 @@ function App() {
     return () => { unsubRoom(); unsubPlayers(); unsubHistory(); };
   }, [roomCode]);
 
-  // --- TOGGLE DINAMICI PER LA NAVIGATION BAR ---
-  const handleToggleModal = (modalType) => {
-    if (modalType === 'stato') {
-      setShowFabModal(!showFabModal);
-      setShowCantilenaModal(false);
-      setShowMobileMenu(false);
-    } else if (modalType === 'notte') {
-      setShowCantilenaModal(!showCantilenaModal);
-      setShowFabModal(false);
-      setShowMobileMenu(false);
-    } else if (modalType === 'menu') {
-      setShowMobileMenu(!showMobileMenu);
-      setShowFabModal(false);
-      setShowCantilenaModal(false);
-    }
-  };
-
-  const createRoom = async () => {
-    const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
-    window.history.pushState({}, '', `?room=${newCode}`);
-    setRoomCode(newCode);
-  };
-
-  const joinRoom = () => {
-    if (joinCodeInput.trim().length !== 5) return alert("Il codice deve essere di 5 caratteri esatti!");
-    const code = joinCodeInput.trim().toUpperCase();
-    window.history.pushState({}, '', `?room=${code}`);
-    setRoomCode(code);
-  };
-
-  const exitRoom = async () => {
-    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA per sempre.")) {
-      try {
-        const batch = writeBatch(db);
-        players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
-        history.forEach((h) => batch.delete(doc(db, 'rooms', roomCode, 'history', h.id)));
-        batch.delete(doc(db, 'rooms', roomCode));
-        await batch.commit();
-
-        setRoomCode(null);
-        setGameMode(null);
-        setGameStarted(false);
-        window.history.pushState({}, '', window.location.pathname);
-      } catch (error) {
-        console.error("Errore nell'uscita: ", error);
-      }
-    }
-  };
-
-  const handleSetGameMode = async (mode) => {
-    await setDoc(doc(db, 'rooms', roomCode), { gameMode: mode }, { merge: true });
-  };
-
-  const toggleGameStarted = async () => {
-    await setDoc(doc(db, 'rooms', roomCode), { gameStarted: !gameStarted }, { merge: true });
-  };
-
-  const getFilteredRoles = () => {
-    const allRoles = Object.keys(ROLE_DATA);
-    let available = allRoles;
-    if (gameMode === "Una Luna") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
-    else if (gameMode === "Una + Due Lune") available = allRoles.filter(r => !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
-    else if (gameMode === "Darkest Night") available = allRoles.filter(r => !EXP_RED_HOOD.includes(r));
-    else if (gameMode === "Cappuccetto Rosso") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r));
-    return available.sort((a, b) => a.localeCompare(b));
-  };
-
-  const sortedRoles = getFilteredRoles();
-
+  // ==========================================
+  // EFFETTI: VITTORIA E TIMER
+  // ==========================================
   const checkVictory = () => {
     if (!gameStarted) return null;
     const alivePlayers = players.filter(p => p.status === 'vivo');
@@ -222,7 +170,75 @@ function App() {
     return `${m}:${s}`;
   };
 
+  // ==========================================
+  // LOGICA: GESTIONE LOBBY E STANZE
+  // ==========================================
+  const createRoom = async () => {
+    const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
+    window.history.pushState({}, '', `?room=${newCode}`);
+    setRoomCode(newCode);
+  };
+
+  const joinRoom = () => {
+    if (joinCodeInput.trim().length !== 5) return alert("Il codice deve essere di 5 caratteri esatti!");
+    const code = joinCodeInput.trim().toUpperCase();
+    window.history.pushState({}, '', `?room=${code}`);
+    setRoomCode(code);
+  };
+
+  const exitRoom = async () => {
+    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA per sempre.")) {
+      try {
+        const batch = writeBatch(db);
+        players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
+        history.forEach((h) => batch.delete(doc(db, 'rooms', roomCode, 'history', h.id)));
+        batch.delete(doc(db, 'rooms', roomCode));
+        await batch.commit();
+
+        setRoomCode(null);
+        setGameMode(null);
+        setGameStarted(false);
+        window.history.pushState({}, '', window.location.pathname);
+      } catch (error) {
+        console.error("Errore nell'uscita: ", error);
+      }
+    }
+  };
+
+  // ==========================================
+  // LOGICA: MECCANICHE DI GIOCO
+  // ==========================================
+  const handleToggleModal = (modalType) => {
+    if (modalType === 'stato') {
+      setShowFabModal(!showFabModal);
+      setShowCantilenaModal(false);
+      setShowMobileMenu(false);
+    } else if (modalType === 'notte') {
+      setShowCantilenaModal(!showCantilenaModal);
+      setShowFabModal(false);
+      setShowMobileMenu(false);
+    } else if (modalType === 'menu') {
+      setShowMobileMenu(!showMobileMenu);
+      setShowFabModal(false);
+      setShowCantilenaModal(false);
+    }
+  };
+
+  const handleSetGameMode = async (mode) => await setDoc(doc(db, 'rooms', roomCode), { gameMode: mode }, { merge: true });
+  const toggleGameStarted = async () => await setDoc(doc(db, 'rooms', roomCode), { gameStarted: !gameStarted }, { merge: true });
   const adjustTimer = (val) => { if (!isTimerRunning) setTimerTime((prev) => Math.max(0, prev + val)); };
+
+  const getFilteredRoles = () => {
+    const allRoles = Object.keys(ROLE_DATA);
+    let available = allRoles;
+    if (gameMode === "Una Luna") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Una + Due Lune") available = allRoles.filter(r => !EXP_DARKEST.includes(r) && !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Darkest Night") available = allRoles.filter(r => !EXP_RED_HOOD.includes(r));
+    else if (gameMode === "Cappuccetto Rosso") available = allRoles.filter(r => !EXP_DUE_LUNE.includes(r) && !EXP_DARKEST.includes(r));
+    return available.sort((a, b) => a.localeCompare(b));
+  };
+  const sortedRoles = getFilteredRoles();
 
   const handleMasterAdd = async (e) => {
     e.preventDefault();
@@ -257,7 +273,7 @@ function App() {
   };
 
   const resetEntireGame = async () => {
-    if(window.confirm("⚠️ ATTENZIONE: Questa azione svuoterà i giocatori e lo storico per ricominciare da capo in questa stanza. Procedere?")) {
+    if(window.confirm("⚠️ ATTENZIONE: Questa azione svuoterà i giocatori e lo storico per ricominciare in questa stanza. Procedere?")) {
       try {
         const batch = writeBatch(db);
         players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
@@ -272,6 +288,9 @@ function App() {
     }
   };
 
+  // ==========================================
+  // VALORI CALCOLATI
+  // ==========================================
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
   const alivePlayersList = players.filter(p => p.status === 'vivo');
   const deadPlayersList = players.filter(p => p.status === 'morto');
@@ -280,6 +299,9 @@ function App() {
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
   const eligibleBallotVotersCount = alivePlayersList.filter(p => !(p.isBallot && p.fazione !== 'Città')).length;
 
+  // ==========================================
+  // RENDER: LOBBY INIZIALE
+  // ==========================================
   if (!roomCode) {
     return (
       <div className="lobby-overlay">
@@ -298,6 +320,9 @@ function App() {
     );
   }
 
+  // ==========================================
+  // RENDER: SELEZIONE MODALITA'
+  // ==========================================
   if (!gameMode) {
     return (
       <div className="mode-selection-overlay">
@@ -314,10 +339,13 @@ function App() {
     );
   }
 
+  // ==========================================
+  // RENDER: MAIN DASHBOARD
+  // ==========================================
   return (
     <div className="dashboard-container">
       
-      {/* MODAL STATO TAVOLO (Mobile) */}
+      {/* --- RENDER MODALS --- */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -343,7 +371,6 @@ function App() {
         </div>
       )}
 
-      {/* MODAL MENU HAMBURGER (Mobile) */}
       {showMobileMenu && (
         <div className="modal-overlay" onClick={() => setShowMobileMenu(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -366,16 +393,15 @@ function App() {
         </div>
       )}
 
-      {/* POP-UP CANTILENA */}
       {showCantilenaModal && (
         <div className="modal-overlay" onClick={() => setShowCantilenaModal(false)}>
           <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ marginTop: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 style={{ marginTop: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px' }}>
               <Moon size={24} /> Fase Notturna
             </h2>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
-              <button className={`btn ${cantilenaTab === 'primaNotte' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('primaNotte')}>La Prima Notte</button>
-              <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <button className={`btn ${cantilenaTab === 'primaNotte' ? 'btn-night' : 'btn-secondary'}`} style={{ flex: 1 }} onClick={() => setCantilenaTab('primaNotte')}>La Prima Notte</button>
+              <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} style={{ flex: 1 }} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
             </div>
             <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px' }}>
               <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '25px' }}>
@@ -388,7 +414,6 @@ function App() {
         </div>
       )}
 
-      {/* POP-UP VITTORIA */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay" onClick={() => setShowVictoryModal(false)}>
           <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
@@ -400,7 +425,6 @@ function App() {
         </div>
       )}
 
-      {/* POP-UP STORICO */}
       {showHistoryModal && (
         <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
           <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
@@ -434,7 +458,7 @@ function App() {
         </div>
       )}
 
-      {/* HEADER DESKTOP / MOBILE */}
+      {/* --- RENDER HEADER E CONTROLLI PRINCIPALI --- */}
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
 
@@ -443,8 +467,8 @@ function App() {
           <div className="top-controls-wrapper">
             <div className="room-badge-container">
               <span className="room-badge">STANZA: {roomCode}</span>
-              <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '5px 8px' }} title="Esci e Distruggi">
-                <DoorOpen size={18} />
+              <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
+                <DoorOpen size={18} /> ESCI
               </button>
             </div>
             
@@ -461,7 +485,6 @@ function App() {
             </div>
           </div>
 
-          {/* CONTROLLI VISIBILI SOLO SU DESKTOP */}
           <div className="button-row desktop-only">
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
@@ -486,12 +509,13 @@ function App() {
         </div>
       </div>
 
+      {/* --- RENDER FORM INSERIMENTO --- */}
       {!gameStarted && (
         <div className="form-container">
           <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>Aggiungi Giocatori</h3>
           <form className="add-form" onSubmit={handleMasterAdd}>
             <input className="dark-input" type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ flex: 1 }}/>
-            <input className="dark-input" list="role-suggestions" placeholder={`Cerca ruolo...`} value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
+            <input className="dark-input" list="role-suggestions" placeholder={`Cerca ruolo per ${gameMode}...`} value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
             <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
             <button type="submit" className="btn btn-secondary" style={{ color: '#fff' }}><Plus size={16} /> Aggiungi</button>
           </form>
@@ -505,6 +529,7 @@ function App() {
         </div>
       )}
 
+      {/* --- RENDER TABELLA GIOCATORI --- */}
       {players.length > 0 && (
         <div className="table-wrapper">
           <table className="game-table">
@@ -605,7 +630,7 @@ function App() {
         </div>
       )}
 
-      {/* BOTTOM NAV BAR (MOBILE) */}
+      {/* --- RENDER BOTTOM NAV BAR (MOBILE) --- */}
       <div className="bottom-nav-bar">
         <button className={`bottom-nav-item ${showFabModal ? 'active' : ''}`} onClick={() => handleToggleModal('stato')}>
           <Eye size={22} />
@@ -628,5 +653,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

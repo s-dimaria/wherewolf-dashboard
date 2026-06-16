@@ -1,4 +1,6 @@
-/* --- BASE DARK MODE (PITCH BLACK) --- */
+/* ==========================================
+   1. BASE E IMPOSTAZIONI GLOBALI
+   ========================================== */
 html, body {
   background-color: #050505;
   color: #c4c4c4;
@@ -6,7 +8,7 @@ html, body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Blocca lo scroll laterale su mobile */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -20,7 +22,9 @@ html, body {
   box-sizing: border-box;
 }
 
-/* --- ANIMAZIONI E TRANSIZIONI --- */
+/* ==========================================
+   2. ANIMAZIONI E TRANSIZIONI
+   ========================================== */
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -34,8 +38,10 @@ html, body {
 .animated-row { animation: slideIn 0.3s ease forwards; }
 .ballot-controls { animation: slideIn 0.2s ease-out forwards; }
 
-/* --- LOBBY INIZIALE --- */
-.lobby-overlay {
+/* ==========================================
+   3. SCHERMATE DI AVVIO: LOBBY E MODALITÀ
+   ========================================== */
+.lobby-overlay, .mode-selection-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
   background-color: #050505;
@@ -48,7 +54,7 @@ html, body {
   box-sizing: border-box;
 }
 
-.lobby-logo {
+.lobby-logo, .mode-logo {
   height: 180px;
   margin-bottom: 40px;
   filter: drop-shadow(0 4px 15px rgba(150,0,0,0.4));
@@ -100,27 +106,6 @@ html, body {
 }
 .lobby-input:focus { outline: none; border-color: #7f1d1d; }
 
-/* --- SELEZIONE MODALITA' INIZIALE --- */
-.mode-selection-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background-color: #050505;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.mode-logo {
-  height: 180px;
-  margin-bottom: 40px;
-  filter: drop-shadow(0 4px 15px rgba(150,0,0,0.4));
-  animation: popIn 0.6s ease-out forwards;
-}
-
 .mode-grid {
   display: flex;
   flex-wrap: wrap;
@@ -152,7 +137,9 @@ html, body {
   box-shadow: 0 10px 25px rgba(100,0,0,0.3);
 }
 
-/* --- MODALS (POP-UP) --- */
+/* ==========================================
+   4. FINESTRE A SCOMPARSA (POP-UP / MODALS)
+   ========================================== */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
@@ -193,7 +180,9 @@ html, body {
 }
 .close-modal-btn:hover { color: #aaa; }
 
-/* --- HEADER E PULSANTI --- */
+/* ==========================================
+   5. HEADER, CONTROLLI E BOTTONI
+   ========================================== */
 .header-container {
   display: flex;
   flex-direction: column;
@@ -213,7 +202,7 @@ html, body {
 .top-controls-wrapper {
   display: flex;
   gap: 15px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; 
   justify-content: center;
   align-items: center;
   width: 100%;
@@ -253,6 +242,7 @@ html, body {
   width: 100%;
 }
 
+/* Stili dei Pulsanti */
 .btn {
   padding: 8px 14px;
   border-radius: 4px;
@@ -268,7 +258,6 @@ html, body {
   gap: 6px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.5);
 }
-
 .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.8); filter: brightness(1.2); }
 .btn:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
@@ -280,7 +269,7 @@ html, body {
 .btn-secondary { background-color: #171717; color: #a3a3a3; border: 1px solid #404040; }
 .btn-night { background-color: #1e1b4b; color: #c084fc; border: 1px solid #4c1d95; }
 
-/* --- TIMER --- */
+/* Controlli Timer */
 .timer-container {
   display: flex;
   align-items: center;
@@ -308,7 +297,9 @@ html, body {
 }
 .timer-btn:hover { background: #222; color: #ccc; }
 
-/* --- FORM INSERIMENTO --- */
+/* ==========================================
+   6. FORM INSERIMENTO GIOCATORI
+   ========================================== */
 .form-container {
   background: #0a0a0a;
   padding: 15px;
@@ -334,18 +325,9 @@ html, body {
 }
 .dark-input:focus { outline: none; border-color: #7f1d1d; }
 
-/* --- RIASSUNTO VOTI MOBILE E FAB --- */
-.mobile-stats {
-  display: none;
-  background: #0a0a0a;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 8px;
-  border: 1px solid #222;
-  text-align: center;
-}
-
-/* --- TABELLA RIGIDA --- */
+/* ==========================================
+   7. TABELLA GIOCATORI (LAYOUT DESKTOP)
+   ========================================== */
 .table-wrapper {
   background: #0a0a0a;
   border-radius: 8px;
@@ -384,7 +366,7 @@ html, body {
 .row-dead { background-color: #170808; opacity: 0.6; }
 .row-ballot { background-color: #1a1205; }
 
-/* --- BADGE STATO DESATURATI --- */
+/* Badge Stato (Vivo/Morto) */
 .status-badge {
   display: inline-flex;
   justify-content: center;
@@ -401,11 +383,11 @@ html, body {
 .status-vivo { background: #0a1f12; color: #4ade80; border: 1px solid #1e4d2b; }
 .status-morto { background: #2f0a0a; color: #f87171; border: 1px solid #7f1d1d; }
 
-/* --- CLASSI DI ALLINEAMENTO DESKTOP/MOBILE --- */
 .fazione-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; }
 .actions-wrapper { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: nowrap; }
 .ballot-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; }
 
+/* Pulsantini Piccoli Tabella (+ / - / Uccidi) */
 .action-btn {
   background: #111;
   color: #888;
@@ -423,25 +405,38 @@ html, body {
 .action-btn:hover { background: #222; color: #fff; border-color: #555; }
 .action-btn:active { transform: scale(0.95); }
 
-/* --- GESTIONE BOTTOM NAV BAR (MOBILE) --- */
+/* Inizialmente nascosti su Desktop */
+.mobile-stats { display: none; }
 .bottom-nav-bar { display: none; }
 
-/* =========================================
-   RESPONSIVE: SMARTPHONE
-   ========================================= */
+/* ==========================================
+   8. RESPONSIVE MOBILE (CARD LAYOUT E BOTTOM BAR)
+   ========================================== */
 @media (max-width: 768px) {
+  /* Nasconde elementi esclusivi desktop */
   .desktop-only { display: none !important; }
   
+  /* Adattamento loghi */
   .header-logo { height: 100px; margin-bottom: 5px; }
   .mode-logo { height: 100px; margin-bottom: 20px; }
   .lobby-logo { height: 100px; margin-bottom: 20px; }
 
+  /* Adattamento form e input */
   .add-form { flex-direction: column; align-items: stretch; }
   .add-form input, .add-form button { width: 100%; box-sizing: border-box; }
   
-  .mobile-stats { display: block; }
+  /* Rende visibile il riassunto voti mobile */
+  .mobile-stats { 
+    display: block; 
+    background: #0a0a0a;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #222;
+    text-align: center;
+  }
 
-  /* FIX: Bottom Nav Bar stile iOS Liquid Glass */
+  /* BARRA DI NAVIGAZIONE INFERIORE (Stile iOS) */
   .bottom-nav-bar {
     display: flex;
     position: fixed;
@@ -452,7 +447,7 @@ html, body {
     max-width: 400px;
     background: rgba(18, 18, 18, 0.75);
     backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%); /* Per iOS */
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 25px;
     z-index: 1500;
@@ -480,14 +475,17 @@ html, body {
   .bottom-nav-item:active { transform: scale(0.95); }
   .bottom-nav-item.active { color: #f87171; }
 
+  /* Libera spazio a fine pagina per non coprire le carte con la barra */
   .dashboard-container {
     padding-bottom: calc(110px + env(safe-area-inset-bottom));
   }
 
+  /* TRASFORMAZIONE TABELLA IN "CARTE" */
   .game-table, .game-table tbody, .game-table tr, .game-table td { display: block; width: 100%; box-sizing: border-box; }
   .game-table thead, .game-table colgroup { display: none; }
   
   .table-wrapper { background: transparent; border: none; box-shadow: none; }
+  
   .game-table tr {
     margin-bottom: 15px;
     background: #0a0a0a;
@@ -510,6 +508,7 @@ html, body {
   }
   .game-table td:last-child { border-bottom: none; }
   
+  /* Etichette interne alle carte mobili */
   .game-table td::before {
     content: attr(data-label);
     position: absolute;
