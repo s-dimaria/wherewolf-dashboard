@@ -32,6 +32,59 @@ html, body {
 .animated-row { animation: slideIn 0.3s ease forwards; }
 .ballot-controls { animation: slideIn 0.2s ease-out forwards; }
 
+/* --- SELEZIONE MODALITA' INIZIALE --- */
+.mode-selection-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: #050505;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.mode-logo {
+  height: 180px;
+  margin-bottom: 40px;
+  filter: drop-shadow(0 4px 15px rgba(150,0,0,0.4));
+  animation: popIn 0.6s ease-out forwards;
+}
+
+.mode-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  max-width: 800px;
+  animation: slideIn 0.6s ease-out forwards;
+}
+
+.mode-card {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px 30px;
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 250px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+}
+
+.mode-card:hover {
+  background: #1a0505;
+  border-color: #7f1d1d;
+  color: #f87171;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(100,0,0,0.3);
+}
+
 /* --- MODALS (POP-UP) --- */
 .modal-overlay {
   position: fixed;
@@ -55,6 +108,9 @@ html, body {
   width: 100%;
   max-width: 500px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .close-modal-btn {
@@ -66,6 +122,7 @@ html, body {
   font-size: 1.8em;
   cursor: pointer;
   transition: color 0.2s;
+  z-index: 10;
 }
 .close-modal-btn:hover { color: #aaa; }
 
@@ -126,6 +183,7 @@ html, body {
 .btn-danger { background-color: #1a0505; color: #dc2626; border: 1px solid #450a0a; }
 .btn-link { background-color: #0a1429; color: #60a5fa; border: 1px solid #1e3a8a; }
 .btn-secondary { background-color: #171717; color: #a3a3a3; border: 1px solid #404040; }
+.btn-night { background-color: #1e1b4b; color: #c084fc; border: 1px solid #4c1d95; }
 
 /* --- TIMER --- */
 .timer-container {
@@ -181,7 +239,7 @@ html, body {
 }
 .dark-input:focus { outline: none; border-color: #7f1d1d; }
 
-/* --- RIASSUNTO VOTI MOBILE --- */
+/* --- RIASSUNTO VOTI MOBILE E FAB --- */
 .mobile-stats {
   display: none;
   background: #0a0a0a;
@@ -191,6 +249,26 @@ html, body {
   border: 1px solid #222;
   text-align: center;
 }
+
+.fab-button {
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #7f1d1d;
+  color: white;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+  z-index: 999;
+  border: 2px solid #450a0a;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.fab-button:active { transform: scale(0.9); }
 
 /* --- TABELLA RIGIDA --- */
 .table-wrapper {
@@ -279,7 +357,9 @@ html, body {
   .button-row button, .button-row a { width: 100%; text-align: center; box-sizing: border-box; }
   .add-form input, .add-form button { width: 100%; box-sizing: border-box; }
   .timer-container { justify-content: center; }
+  
   .mobile-stats { display: block; }
+  .fab-button { display: flex; }
 
   .game-table, .game-table tbody, .game-table tr, .game-table td { display: block; width: 100%; box-sizing: border-box; }
   .game-table thead, .game-table colgroup { display: none; }

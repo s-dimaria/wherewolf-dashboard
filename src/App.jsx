@@ -1,8 +1,10 @@
 import { addDoc, collection, deleteDoc, doc, onSnapshot, updateDoc, writeBatch } from 'firebase/firestore';
 import {
   BookOpen,
+  Eye,
   Heart,
   History,
+  Moon,
   Pause,
   Play,
   Plus,
@@ -15,21 +17,56 @@ import './App.css';
 import { db } from './firebase';
 import { ROLE_DATA } from './roles';
 
+// --- CONFIGURAZIONE CANTILENE E MANUALI ---
+const GAME_MODES = ["Una Luna", "Una + Due Lune", "Darkest Night", "Cappuccetto Rosso"];
+
+const MANUALS = {
+  "Una Luna": "/Revised.pdf",
+  "Una + Due Lune": "/Revised.pdf",
+  "Darkest Night": "/Darkest Night.pdf",
+  "Cappuccetto Rosso": "/Red Riding Hood.pdf"
+};
+
+const CANTILENA = {
+  "Una Luna": {
+    primaNotte: ["Veggente", "Mago", "Monaco", "Prete", "Lupi Mannari"],
+    nottiSuccessive: ["Veggente", "Medium", "Mago", "Lupi Mannari", "Guaritore"]
+  },
+  "Una + Due Lune": {
+    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di vampiri", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
+    nottiSuccessive: ["Veggente", "Medium", "Mago", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Guaritore"]
+  },
+  "Darkest Night": {
+    primaNotte: ["Veggente", "Mago", "Inquisizione", "Criminali", "Guardie", "Monaco", "Bracconiere", "Cacciatore di vampiri", "Becchino", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Lupo Solitario", "Vampiro", "Nosferatu", "Negromante", "Posseduto", "Guaritore"],
+    nottiSuccessive: ["Veggente", "Medium", "Mago", "Strega", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Nosferatu", "Guaritore", "Posseduto"]
+  },
+  "Cappuccetto Rosso": {
+    primaNotte: ["Veggente", "Mago", "Criminali", "Guardie", "Monaco", "Cacciatore di vampiri", "Prete", "Giulietta", "Angelo custode", "L'amuleto e la spada", "Lupi del branco", "Vampiro"],
+    nottiSuccessive: ["Veggente", "Medium", "Mago", "L'amuleto e la spada", "Lupi Mannari", "Vampiro", "Guaritore"]
+  }
+};
+
 function App() {
   const [players, setPlayers] = useState([]);
   const [history, setHistory] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
+  
+  // Modalità di Gioco Principale
+  const [gameMode, setGameMode] = useState(null);
 
   const [masterName, setMasterName] = useState('');
   const [masterRole, setMasterRole] = useState('');
 
-  // Modals e UI States
+  // Modals States
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [showCantilenaModal, setShowCantilenaModal] = useState(false);
+  const [showFabModal, setShowFabModal] = useState(false);
+  const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
   // Timer States
-  const [timerTime, setTimerTime] = useState(300); // Default 5 min
+  const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const sortedRoles = Object.keys(ROLE_DATA).sort((a, b) => a.localeCompare(b));
@@ -38,7 +75,8 @@ function App() {
   useEffect(() => {
     const unsubPlayers = onSnapshot(collection(db, 'players'), (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPlayers(playersData.sort((a, b) => a.name.localeCompare(b.name)));
+      // Non li ordiniamo più per nome ma per ordine di inserimento (createdAt)
+      setPlayers(playersData.sort((a, b) => a.createdAt - b.createdAt));
     });
 
     const unsubHistory = onSnapshot(collection(db, 'history'), (snapshot) => {
@@ -52,21 +90,17 @@ function App() {
     };
   }, []);
 
-  // --- MOTORE DI VITTORIA ---
   const checkVictory = () => {
     if (!gameStarted) return null;
-
     const alivePlayers = players.filter(p => p.status === 'vivo');
     if (alivePlayers.length === 0) return null; 
 
     const isCreaturaOmbra = (p) => {
       const originalFaction = ROLE_DATA[p.role]?.fazione;
       const currentFaction = p.fazione;
-      
       const isOriginallyOmbra = originalFaction === "Lupi del Branco" || originalFaction === "Vampiro" || ROLE_DATA[p.role]?.isWolf;
       const isCurrentlyOmbra = currentFaction === "Lupi del Branco" || currentFaction === "Vampiro";
       const isAmanteOmbra = currentFaction === "Amante" && isOriginallyOmbra;
-
       return isCurrentlyOmbra || isAmanteOmbra;
     };
 
@@ -96,7 +130,6 @@ function App() {
     }
   }, [victoryStatus?.winner]);
 
-  // --- MOTORE TIMER ---
   useEffect(() => {
     let interval;
     if (isTimerRunning && timerTime > 0) {
@@ -116,12 +149,9 @@ function App() {
   };
 
   const adjustTimer = (val) => {
-    if (!isTimerRunning) {
-      setTimerTime((prev) => Math.max(0, prev + val));
-    }
+    if (!isTimerRunning) setTimerTime((prev) => Math.max(0, prev + val));
   };
 
-  // --- FUNZIONI DI GIOCO ---
   const handleMasterAdd = async (e) => {
     e.preventDefault();
     if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) {
@@ -136,57 +166,39 @@ function App() {
       notes: '',
       votes: 0,          
       ballotVotes: 0,    
-      isBallot: false    
+      isBallot: false,
+      createdAt: Date.now() // Fondamentale per mantenere l'ordine al tavolo
     });
     setMasterName(''); 
     setMasterRole(''); 
   };
 
   const updateField = async (id, field, value) => {
-    const playerRef = doc(db, 'players', id);
-    await updateDoc(playerRef, { [field]: value });
+    await updateDoc(doc(db, 'players', id), { [field]: value });
   };
 
   const incrementVote = async (id, currentVotes, field) => updateField(id, field, (currentVotes || 0) + 1);
   const decrementVote = async (id, currentVotes, field) => {
     if (currentVotes > 0) updateField(id, field, currentVotes - 1);
   };
-
   const toggleStatus = async (id, currentStatus) => {
-    const newStatus = currentStatus === 'vivo' ? 'morto' : 'vivo';
-    updateField(id, 'status', newStatus);
+    updateField(id, 'status', currentStatus === 'vivo' ? 'morto' : 'vivo');
   };
-
   const removePlayer = async (id) => await deleteDoc(doc(db, 'players', id));
 
-  // --- SALVATAGGIO & RESET CON WRITEBATCH ---
   const resetAllVotes = async () => {
     if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
       try {
         const dayLog = players
           .filter(p => p.votes > 0 || p.ballotVotes > 0 || p.isBallot)
           .map(p => ({
-            name: p.name,
-            role: p.role,
-            votes: p.votes,
-            ballotVotes: p.ballotVotes,
-            isBallot: p.isBallot
+            name: p.name, role: p.role, votes: p.votes, ballotVotes: p.ballotVotes, isBallot: p.isBallot
           }));
-
-        if (dayLog.length > 0) {
-          await addDoc(collection(db, 'history'), {
-            date: new Date().toISOString(),
-            log: dayLog
-          });
-        }
+        if (dayLog.length > 0) await addDoc(collection(db, 'history'), { date: new Date().toISOString(), log: dayLog });
 
         const batch = writeBatch(db);
-        players.forEach((p) => {
-          const playerRef = doc(db, 'players', p.id);
-          batch.update(playerRef, { votes: 0, ballotVotes: 0, isBallot: false });
-        });
+        players.forEach((p) => batch.update(doc(db, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
         await batch.commit();
-
       } catch (error) {
         console.error("Errore nel reset dei voti: ", error);
         alert("Si è verificato un errore durante il reset. Riprova.");
@@ -205,6 +217,7 @@ function App() {
         setGameStarted(false);
         setTimerTime(300);
         setIsTimerRunning(false);
+        setGameMode(null);
       } catch (error) {
         console.error("Errore nello svuotamento partita: ", error);
       }
@@ -212,22 +225,86 @@ function App() {
   };
 
   const FAZIONI_POSSIBILI = ["Villaggio", "Città", "Lupi del Branco", "Criminali", "Amante", "Vampiro", "Inquisizione", "Indipendenti", "Nessuna"];
-
   const alivePlayersList = players.filter(p => p.status === 'vivo');
+  const deadPlayersList = players.filter(p => p.status === 'morto');
   const aliveCount = alivePlayersList.length;
-
   const totalDayVotes = players.reduce((sum, p) => sum + (p.votes || 0), 0);
   const totalBallotVotes = players.reduce((sum, p) => sum + (p.ballotVotes || 0), 0);
+  const eligibleBallotVotersCount = alivePlayersList.filter(p => !(p.isBallot && p.fazione !== 'Città')).length;
 
-  const eligibleBallotVotersCount = alivePlayersList.filter(p => {
-    if (p.isBallot && p.fazione !== 'Città') return false;
-    return true;
-  }).length;
+  // --- SELEZIONE MODALITA' INIZIALE ---
+  if (!gameMode) {
+    return (
+      <div className="mode-selection-overlay">
+        <img src="/logo.png?v=3" alt="Wherewolf" className="mode-logo" />
+        <h2 style={{ color: '#c4c4c4', marginBottom: '30px', fontWeight: 'normal' }}>Seleziona la Modalità di Gioco</h2>
+        <div className="mode-grid">
+          {GAME_MODES.map(mode => (
+            <div key={mode} className="mode-card" onClick={() => setGameMode(mode)}>
+              {mode}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-container">
       
-      {/* POP-UP VITTORIA */}
+      {/* FAB BOTTOM SHEET (MOBILE) */}
+      {showFabModal && (
+        <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
+          <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 15px 0', borderBottom: '1px solid #333', paddingBottom: '10px', color: '#c4c4c4' }}>Situazione al Tavolo</h3>
+            <div style={{ overflowY: 'auto', paddingRight: '10px' }}>
+              <h4 style={{ color: '#4ade80', margin: '10px 0 5px 0' }}>VIVI ({alivePlayersList.length})</h4>
+              {alivePlayersList.map((p, i) => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
+                  <span style={{ color: '#e0e0e0' }}><strong>{i + 1}.</strong> {p.name}</span>
+                  <span style={{ color: '#888', fontSize: '0.9em' }}>{p.role}</span>
+                </div>
+              ))}
+              
+              <h4 style={{ color: '#f87171', margin: '20px 0 5px 0' }}>MORTI ({deadPlayersList.length})</h4>
+              {deadPlayersList.map(p => (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222', opacity: 0.5 }}>
+                  <span style={{ color: '#f87171', textDecoration: 'line-through' }}>{p.name}</span>
+                  <span style={{ color: '#888', fontSize: '0.9em' }}>{p.role}</span>
+                </div>
+              ))}
+            </div>
+            <button className="btn btn-secondary" style={{ marginTop: '20px' }} onClick={() => setShowFabModal(false)}>Chiudi</button>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP CANTILENA */}
+      {showCantilenaModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '600px' }}>
+            <button className="close-modal-btn" onClick={() => setShowCantilenaModal(false)}>×</button>
+            <h2 style={{ marginTop: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Moon size={24} /> Fase Notturna ({gameMode})
+            </h2>
+            
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+              <button className={`btn ${cantilenaTab === 'primaNotte' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('primaNotte')}>La Prima Notte</button>
+              <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
+            </div>
+
+            <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px' }}>
+              <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '25px' }}>
+                {CANTILENA[gameMode][cantilenaTab].map((ruolo, idx) => (
+                  <li key={idx} style={{ paddingBottom: '5px', borderBottom: '1px solid #1a1a1a' }}>{ruolo}</li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ALTRI POP-UP (Vittoria e Storico) */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }}>
@@ -240,7 +317,6 @@ function App() {
         </div>
       )}
 
-      {/* POP-UP STORICO VOTI */}
       {showHistoryModal && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '600px' }}>
@@ -279,13 +355,10 @@ function App() {
 
         <div className="button-group">
           
-          {/* PRIMA RIGA BOTTONI: Controlli Primari */}
           <div className="button-row">
             <div className="timer-container">
               <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>
-                {formatTime(timerTime)}
-              </div>
+              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
               <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
               <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
                 {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
@@ -298,21 +371,19 @@ function App() {
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => setGameStarted(!gameStarted)}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
             </button>
-            <button className="btn btn-day" onClick={resetAllVotes}>
-              <Sun size={16} /> Nuovo Giorno
-            </button>
-            <button className="btn btn-danger" onClick={resetEntireGame}>
-              <Trash2 size={16} /> Nuova Partita
-            </button>
+            <button className="btn btn-day" onClick={resetAllVotes}><Sun size={16} /> Nuovo Giorno</button>
+            <button className="btn btn-danger" onClick={resetEntireGame}><Trash2 size={16} /> Nuova Partita</button>
           </div>
 
-          {/* SECONDA RIGA BOTTONI: Controlli Secondari */}
           <div className="button-row">
+            <button className="btn btn-night" onClick={() => setShowCantilenaModal(true)}>
+              <Moon size={16} /> Fase Notturna
+            </button>
             <button className="btn btn-secondary" onClick={() => setShowHistoryModal(true)}>
               <History size={16} /> Storico
             </button>
-            <a href="/Regolamento WhereWolf.pdf" target="_blank" rel="noopener noreferrer" className="btn btn-link">
-              <BookOpen size={16} /> Manuale
+            <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link">
+              <BookOpen size={16} /> Manuale ({gameMode})
             </a>
           </div>
 
@@ -321,28 +392,20 @@ function App() {
 
       {!gameStarted && (
         <div className="form-container">
-          <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            Aggiungi Giocatori alla Stanza
-          </h3>
+          <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>Aggiungi Giocatori alla Stanza</h3>
           <form className="add-form" onSubmit={handleMasterAdd}>
             <input className="dark-input" type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ flex: 1 }}/>
-            <input className="dark-input" list="role-suggestions" placeholder="Cerca ruolo..." value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
+            <input className="dark-input" list="role-suggestions" placeholder={`Cerca ruolo per ${gameMode}...`} value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
             <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
-            <button type="submit" className="btn btn-secondary" style={{ color: '#fff' }}>
-              <Plus size={16} /> Aggiungi
-            </button>
+            <button type="submit" className="btn btn-secondary" style={{ color: '#fff' }}><Plus size={16} /> Aggiungi</button>
           </form>
         </div>
       )}
 
       {gameStarted && (
         <div className="mobile-stats">
-          <div style={{ color: '#d97706', marginBottom: '5px' }}>
-            <strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}
-          </div>
-          <div style={{ color: '#dc2626' }}>
-            <strong>Voti Ballottaggio:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}
-          </div>
+          <div style={{ color: '#d97706', marginBottom: '5px' }}><strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}</div>
+          <div style={{ color: '#dc2626' }}><strong>Voti Ballottaggio:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}</div>
         </div>
       )}
 
@@ -350,15 +413,15 @@ function App() {
         <div className="table-wrapper">
           <table className="game-table">
             <colgroup>
-              <col style={{ width: '11%' }} /> {/* Nome */}
-              <col style={{ width: '12%' }} /> {/* Ruolo */}
-              <col style={{ width: '7%' }} />  {/* Mistico */}
-              <col style={{ width: '13%' }} /> {/* Fazione */}
-              <col style={{ width: '13%' }} /> {/* Note */}
-              <col style={{ width: '10%' }} /> {/* Voti */}
-              <col style={{ width: '14%' }} /> {/* Ballottaggio */}
-              <col style={{ width: '9%' }} />  {/* Stato */}
-              <col style={{ width: '11%' }} /> {/* Azioni */}
+              <col style={{ width: '11%' }} /> 
+              <col style={{ width: '12%' }} /> 
+              <col style={{ width: '7%' }} />  
+              <col style={{ width: '13%' }} /> 
+              <col style={{ width: '13%' }} /> 
+              <col style={{ width: '10%' }} /> 
+              <col style={{ width: '14%' }} /> 
+              <col style={{ width: '9%' }} />  
+              <col style={{ width: '11%' }} /> 
             </colgroup>
             <thead>
               <tr>
@@ -379,28 +442,16 @@ function App() {
               {players.map((p) => {
                 const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
                 const isDead = p.status === 'morto';
-                
                 let currentAura = roleInfo.aura;
                 if (p.fazione === "Vampiro") currentAura = "Oscura";
                 if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
-
                 const rowClass = isDead ? 'row-dead animated-row' : p.isBallot ? 'row-ballot animated-row' : 'row-alive animated-row';
                 
                 return (
                   <tr key={p.id} className={rowClass}>
-                    
-                    <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em', color: '#e0e0e0' }}>
-                      {p.name}
-                    </td>
-                    
-                    <td data-label="Ruolo">
-                      {p.role}
-                    </td>
-                    
-                    <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9333ea' : '#555' }}>
-                      {roleInfo.misticismo || 'No'}
-                    </td>
-                    
+                    <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em', color: '#e0e0e0' }}>{p.name}</td>
+                    <td data-label="Ruolo">{p.role}</td>
+                    <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9333ea' : '#555' }}>{roleInfo.misticismo || 'No'}</td>
                     <td data-label="Fazione & Aura">
                       <div className="fazione-wrapper">
                         <select className="dark-input" style={{ width: '100%', maxWidth: '140px', padding: '4px', marginBottom: '4px' }} value={p.fazione || roleInfo.fazione} onChange={(e) => updateField(p.id, 'fazione', e.target.value)}>
@@ -409,11 +460,7 @@ function App() {
                         <span style={{ fontSize: '0.85em', color: '#777' }}>(Aura: {currentAura})</span>
                       </div>
                     </td>
-                    
-                    <td data-label="Note">
-                      <input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', padding: '6px' }} />
-                    </td>
-                    
+                    <td data-label="Note"><input className="dark-input" type="text" defaultValue={p.notes || ''} onBlur={(e) => updateField(p.id, 'notes', e.target.value)} placeholder="..." style={{ width: '100%', padding: '6px' }} /></td>
                     <td data-label="Voti">
                       {!isDead ? (
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
@@ -421,11 +468,8 @@ function App() {
                           <span style={{ fontSize: '1.2em', fontWeight: 'bold', minWidth: '20px', textAlign: 'center', color: '#d97706' }}>{p.votes || 0}</span>
                           <button className="action-btn" onClick={() => incrementVote(p.id, p.votes, 'votes')}>+</button>
                         </div>
-                      ) : (
-                        <span style={{ color: '#333', fontStyle: 'italic' }}>-</span>
-                      )}
+                      ) : (<span style={{ color: '#333', fontStyle: 'italic' }}>-</span>)}
                     </td>
-                    
                     <td data-label="Ballottaggio" style={{ borderLeft: '1px solid #333' }}>
                       {!isDead ? (
                         <div className="ballot-wrapper">
@@ -441,17 +485,9 @@ function App() {
                              </div>
                           )}
                         </div>
-                      ) : (
-                        <span style={{ color: '#333', fontStyle: 'italic' }}>-</span>
-                      )}
+                      ) : (<span style={{ color: '#333', fontStyle: 'italic' }}>-</span>)}
                     </td>
-                    
-                    <td data-label="Stato">
-                      <span className={`status-badge ${isDead ? 'status-morto' : 'status-vivo'}`}>
-                        {isDead ? 'Morto' : 'Vivo'}
-                      </span>
-                    </td>
-                    
+                    <td data-label="Stato"><span className={`status-badge ${isDead ? 'status-morto' : 'status-vivo'}`}>{isDead ? 'Morto' : 'Vivo'}</span></td>
                     <td data-label="Azioni">
                       <div className="actions-wrapper">
                         {gameStarted ? (
@@ -465,7 +501,6 @@ function App() {
                         )}
                       </div>
                     </td>
-                    
                   </tr>
                 );
               })}
@@ -473,6 +508,12 @@ function App() {
           </table>
         </div>
       )}
+
+      {/* BOTTONE FLOATING PER MOBILE */}
+      <button className="fab-button" onClick={() => setShowFabModal(true)}>
+        <Eye size={24} />
+      </button>
+
     </div>
   );
 }

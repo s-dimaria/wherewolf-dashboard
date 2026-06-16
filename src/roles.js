@@ -44,5 +44,35 @@ export const ROLE_DATA = {
   "Ghoul": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
   "Giullare": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
   "Pazzo": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
-  "Traditore": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false }
+  "Traditore": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
+
+  // --- FAZIONE INQUISIZIONE (Darkest Night) ---
+  "Inquisitore": { fazione: "Inquisizione", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Boia": { fazione: "Inquisizione", aura: "Oscura", misticismo: "No", isWolf: false },
+  "Templare": { fazione: "Inquisizione", aura: "Bianca", misticismo: "No", isWolf: false },
+
+  // --- NUOVI VILLICI (Darkest Night) ---
+  "Appestato": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Becchino": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Bracconiere": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Mostro": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+
+  // --- NUOVE OMBRE E LUPI (Darkest Night) ---
+  "Lupo Reietto": { fazione: "Lupi del Branco", aura: "Oscura", misticismo: "No", isWolf: true },
+  "Lupo Solitario": { fazione: "Lupo Solitario", aura: "Oscura", misticismo: "No", isWolf: true },
+  "Nosferatu": { fazione: "Nosferatu", aura: "Oscura", misticismo: "No", isWolf: false },
+  "Negromante": { fazione: "Negromante", aura: "Oscura", misticismo: "Sì", isWolf: false },
+  "Posseduto": { fazione: "Posseduto", aura: "Oscura", misticismo: "No", isWolf: false },
+  "Megera": { fazione: "Nessuna", aura: "Oscura", misticismo: "Sì", isWolf: false },
+
+  // --- SPIRITI E INDIPENDENTI (Darkest Night) ---
+  "Fantasma": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Presenza": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Spettro": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Viaggiatore": { fazione: "Nessuna", aura: "Bianca", misticismo: "No", isWolf: false },
+
+  // --- CAPPUCCETTO ROSSO ---
+  "Cappuccetto Rosso": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Cacciatore": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false },
+  "Nonna": { fazione: "Villaggio", aura: "Bianca", misticismo: "No", isWolf: false }
 };
