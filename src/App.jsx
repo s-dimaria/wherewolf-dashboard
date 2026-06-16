@@ -21,8 +21,8 @@ import { ROLE_DATA } from './roles';
 const GAME_MODES = ["Una Luna", "Una + Due Lune", "Darkest Night", "Cappuccetto Rosso"];
 
 const MANUALS = {
-  "Una Luna": "/One Moon.pdf",
-  "Una + Due Lune": "/Two Moons.pdf",
+  "Una Luna": "/Revised.pdf",
+  "Una + Due Lune": "/Revised.pdf",
   "Darkest Night": "/Darkest Night.pdf",
   "Cappuccetto Rosso": "/Red Riding Hood.pdf"
 };
@@ -47,9 +47,9 @@ const CANTILENA = {
 };
 
 // --- LISTE RUOLI PER ESPANSIONE ---
-const EXP_DUE_LUNE = ["Azzeccagarbugli", "Bocca di Rosa", "Borgomastro", "Mercante", "Oratore", "Assassino", "Capo Gilda", "Guardia Corrotta", "Ladra", "Spia", "Angelo Custode", "Giulietta", "Vampiro", "Ghoul", "Cacciatore di Vampiri"];
+const EXP_DUE_LUNE = ["Guardia", "Altra Guardia", "Azzeccagarbugli", "Bocca di Rosa", "Borgomastro", "Mercante", "Oratore", "Assassino", "Capo Gilda", "Guardia Corrotta", "Ladra", "Spia", "Angelo Custode", "Giulietta", "Vampiro", "Ghoul", "Cacciatore di Vampiri"];
 const EXP_DARKEST = ["Inquisitore", "Boia", "Templare", "Appestato", "Becchino", "Bracconiere", "Mostro", "Lupo Reietto", "Lupo Solitario", "Nosferatu", "Negromante", "Posseduto", "Megera", "Fantasma", "Presenza", "Spettro", "Viaggiatore"];
-const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna", "Lupo (Cappuccetto)"];
+const EXP_RED_HOOD = ["Cappuccetto Rosso", "Cacciatore", "Nonna"];
 
 function App() {
   const [players, setPlayers] = useState([]);
