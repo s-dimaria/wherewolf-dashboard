@@ -13,7 +13,6 @@ import './App.css';
 import { db } from './firebase';
 import { ROLE_DATA } from './roles';
 
-// --- CONFIGURAZIONE CANTILENE E MANUALI ---
 const GAME_MODES = ["Una Luna", "Una + Due Lune", "Darkest Night", "Cappuccetto Rosso"];
 
 const MANUALS = {
@@ -58,7 +57,6 @@ function App() {
   const [masterName, setMasterName] = useState('');
   const [masterRole, setMasterRole] = useState('');
 
-  // Modals States
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showCantilenaModal, setShowCantilenaModal] = useState(false);
@@ -67,7 +65,6 @@ function App() {
   const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
-  // Timer
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
@@ -104,6 +101,23 @@ function App() {
     return () => { unsubRoom(); unsubPlayers(); unsubHistory(); };
   }, [roomCode]);
 
+  // --- TOGGLE DINAMICI PER LA NAVIGATION BAR ---
+  const handleToggleModal = (modalType) => {
+    if (modalType === 'stato') {
+      setShowFabModal(!showFabModal);
+      setShowCantilenaModal(false);
+      setShowMobileMenu(false);
+    } else if (modalType === 'notte') {
+      setShowCantilenaModal(!showCantilenaModal);
+      setShowFabModal(false);
+      setShowMobileMenu(false);
+    } else if (modalType === 'menu') {
+      setShowMobileMenu(!showMobileMenu);
+      setShowFabModal(false);
+      setShowCantilenaModal(false);
+    }
+  };
+
   const createRoom = async () => {
     const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
     await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
@@ -119,7 +133,7 @@ function App() {
   };
 
   const exitRoom = async () => {
-    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA eliminando tutti i giocatori e lo storico per sempre.")) {
+    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA per sempre.")) {
       try {
         const batch = writeBatch(db);
         players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
@@ -289,7 +303,7 @@ function App() {
       <div className="mode-selection-overlay">
         <img src="/logo.png?v=3" alt="Wherewolf" className="mode-logo" />
         <h2 style={{ color: '#c4c4c4', marginBottom: '30px', fontWeight: 'normal' }}>
-          Stanza <span className="room-badge">{roomCode}</span> - Seleziona Modalità
+          Stanza <span className="room-badge">{roomCode}</span>
         </h2>
         <div className="mode-grid">
           {GAME_MODES.map(mode => (
@@ -303,10 +317,10 @@ function App() {
   return (
     <div className="dashboard-container">
       
-      {/* MODAL BOTTOM SHEET MOBILE (Stato) */}
+      {/* MODAL STATO TAVOLO (Mobile) */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
-          <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, maxHeight: '70vh' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 15px 0', borderBottom: '1px solid #333', paddingBottom: '10px', color: '#c4c4c4' }}>Situazione al Tavolo</h3>
             <div style={{ overflowY: 'auto', paddingRight: '10px' }}>
               <h4 style={{ color: '#4ade80', margin: '10px 0 5px 0' }}>VIVI ({alivePlayersList.length})</h4>
@@ -325,7 +339,6 @@ function App() {
                 </div>
               ))}
             </div>
-            <button className="btn btn-secondary" style={{ marginTop: '20px' }} onClick={() => setShowFabModal(false)}>Chiudi</button>
           </div>
         </div>
       )}
@@ -333,23 +346,20 @@ function App() {
       {/* MODAL MENU HAMBURGER (Mobile) */}
       {showMobileMenu && (
         <div className="modal-overlay" onClick={() => setShowMobileMenu(false)}>
-          <div className="modal-content" style={{ marginTop: 'auto', marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }} onClick={e => e.stopPropagation()}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3 style={{ margin: '0 0 15px 0', borderBottom: '1px solid #333', paddingBottom: '10px', color: '#c4c4c4' }}>Opzioni Partita</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => { toggleGameStarted(); setShowMobileMenu(false); }}>
-                {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={() => { toggleGameStarted(); setShowMobileMenu(false); }} style={{ padding: '12px' }}>
+                {gameStarted ? <><Square size={18} /> Ferma Partita</> : <><Play size={18} /> Avvia Partita</>}
               </button>
-              <button className="btn btn-secondary" onClick={() => { setShowHistoryModal(true); setShowMobileMenu(false); }}>
-                <History size={16} /> Storico
+              <button className="btn btn-secondary" onClick={() => { setShowHistoryModal(true); setShowMobileMenu(false); }} style={{ padding: '12px' }}>
+                <History size={18} /> Storico
               </button>
-              <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link">
-                <BookOpen size={16} /> Manuale
+              <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link" style={{ padding: '12px' }}>
+                <BookOpen size={18} /> Manuale ({gameMode})
               </a>
-              <button className="btn btn-danger" onClick={() => { resetEntireGame(); setShowMobileMenu(false); }}>
-                <Trash2 size={16} /> Nuova Partita
-              </button>
-              <button className="btn btn-secondary" onClick={exitRoom} style={{ backgroundColor: '#1a1a1a', borderColor: '#333', color: '#f87171' }}>
-                <DoorOpen size={16} /> Esci e Distruggi
+              <button className="btn btn-danger" onClick={() => { resetEntireGame(); setShowMobileMenu(false); }} style={{ padding: '12px' }}>
+                <Trash2 size={18} /> Nuova Partita
               </button>
             </div>
           </div>
@@ -358,11 +368,10 @@ function App() {
 
       {/* POP-UP CANTILENA */}
       {showCantilenaModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '600px' }}>
-            <button className="close-modal-btn" onClick={() => setShowCantilenaModal(false)}>×</button>
+        <div className="modal-overlay" onClick={() => setShowCantilenaModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <h2 style={{ marginTop: 0, color: '#c084fc', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Moon size={24} /> Fase Notturna ({gameMode})
+              <Moon size={24} /> Fase Notturna
             </h2>
             <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
               <button className={`btn ${cantilenaTab === 'primaNotte' ? 'btn-night' : 'btn-secondary'}`} onClick={() => setCantilenaTab('primaNotte')}>La Prima Notte</button>
@@ -381,9 +390,8 @@ function App() {
 
       {/* POP-UP VITTORIA */}
       {victoryStatus && showVictoryModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }}>
-            <button className="close-modal-btn" onClick={() => setShowVictoryModal(false)}>×</button>
+        <div className="modal-overlay" onClick={() => setShowVictoryModal(false)}>
+          <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
             <h1 style={{ margin: '10px 0', color: victoryStatus.winner === 'Villaggio' ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', lineHeight: '1.2' }}>
               <Trophy size={32} /> VITTORIA: {victoryStatus.winner.toUpperCase()}!
             </h1>
@@ -394,8 +402,8 @@ function App() {
 
       {/* POP-UP STORICO */}
       {showHistoryModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '600px' }}>
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <button className="close-modal-btn" onClick={() => setShowHistoryModal(false)}>×</button>
             <h2 style={{ marginTop: 0, borderBottom: '1px solid #333', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', color: '#c4c4c4' }}>
               <History size={24} /> Storico Voti
@@ -432,8 +440,14 @@ function App() {
 
         <div className="button-group">
           
-          <div className="button-row">
-            <span className="room-badge" style={{ display: 'flex', alignItems: 'center' }}>STANZA: {roomCode}</span>
+          <div className="top-controls-wrapper">
+            <div className="room-badge-container">
+              <span className="room-badge">STANZA: {roomCode}</span>
+              <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '5px 8px' }} title="Esci e Distruggi">
+                <DoorOpen size={18} />
+              </button>
+            </div>
+            
             <div className="timer-container">
               <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
               <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
@@ -452,9 +466,11 @@ function App() {
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
             </button>
-            <button className="btn btn-day" onClick={resetAllVotes}><Sun size={16} /> Nuovo Giorno</button>
             <button className="btn btn-danger" onClick={resetEntireGame} title="Svuota stanza e cancella lo storico">
               <Trash2 size={16} /> Nuova Partita
+            </button>
+            <button className="btn btn-day" onClick={resetAllVotes}>
+              <Sun size={16} /> Nuovo Giorno
             </button>
             <button className="btn btn-night" onClick={() => setShowCantilenaModal(true)}>
               <Moon size={16} /> Fase Notturna
@@ -465,9 +481,6 @@ function App() {
             <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link">
               <BookOpen size={16} /> Manuale
             </a>
-            <button className="btn btn-secondary" onClick={exitRoom} style={{ backgroundColor: '#1a1a1a', borderColor: '#333' }}>
-              <DoorOpen size={16} /> Esci
-            </button>
           </div>
 
         </div>
@@ -475,10 +488,10 @@ function App() {
 
       {!gameStarted && (
         <div className="form-container">
-          <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>Aggiungi Giocatori alla Stanza</h3>
+          <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>Aggiungi Giocatori</h3>
           <form className="add-form" onSubmit={handleMasterAdd}>
             <input className="dark-input" type="text" placeholder="Nome giocatore" value={masterName} onChange={(e) => setMasterName(e.target.value)} required style={{ flex: 1 }}/>
-            <input className="dark-input" list="role-suggestions" placeholder={`Cerca ruolo per ${gameMode}...`} value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
+            <input className="dark-input" list="role-suggestions" placeholder={`Cerca ruolo...`} value={masterRole} onChange={(e) => setMasterRole(e.target.value)} required style={{ flex: 1 }}/>
             <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
             <button type="submit" className="btn btn-secondary" style={{ color: '#fff' }}><Plus size={16} /> Aggiungi</button>
           </form>
@@ -594,20 +607,20 @@ function App() {
 
       {/* BOTTOM NAV BAR (MOBILE) */}
       <div className="bottom-nav-bar">
-        <button className="bottom-nav-item" onClick={() => setShowFabModal(true)}>
-          <Eye size={20} />
+        <button className={`bottom-nav-item ${showFabModal ? 'active' : ''}`} onClick={() => handleToggleModal('stato')}>
+          <Eye size={22} />
           <span>Stato</span>
         </button>
         <button className="bottom-nav-item" onClick={resetAllVotes}>
-          <Sun size={20} />
+          <Sun size={22} />
           <span>Giorno</span>
         </button>
-        <button className="bottom-nav-item" onClick={() => setShowCantilenaModal(true)}>
-          <Moon size={20} />
+        <button className={`bottom-nav-item ${showCantilenaModal ? 'active' : ''}`} onClick={() => handleToggleModal('notte')}>
+          <Moon size={22} />
           <span>Notte</span>
         </button>
-        <button className="bottom-nav-item" onClick={() => setShowMobileMenu(true)}>
-          <Menu size={20} />
+        <button className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`} onClick={() => handleToggleModal('menu')}>
+          <Menu size={22} />
           <span>Menù</span>
         </button>
       </div>
