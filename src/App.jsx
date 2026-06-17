@@ -191,7 +191,7 @@ export default function App() {
   };
 
   const exitRoom = async () => {
-    if(window.confirm("Sei sicuro di voler uscire? La stanza verrà DISTRUTTA per sempre.")) {
+    if(window.confirm("Sei sicuro di voler uscire?")) {
       try {
         const batch = writeBatch(db);
         players.forEach((p) => batch.delete(doc(db, 'rooms', roomCode, 'players', p.id)));
@@ -399,7 +399,7 @@ export default function App() {
               {players.some(p => p.isBallot && p.status === 'vivo') ? (
                 <>
                   <h4 style={{ color: '#dc2626', margin: '0 0 10px 0' }}>BALLOTTANTI</h4>
-                  {players.filter(p => p.isBallot && p.status === 'vivo').map(p => (
+                  {players.sort(p => p.ballotVotes).filter(p => p.isBallot && p.status === 'vivo').map(p => (
                     <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
                       <span style={{ color: '#e0e0e0' }}>{p.name} <span style={{ color: '#888', fontSize: '0.85em' }}>({p.role})</span></span>
                       <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{p.ballotVotes || 0} Voti</span>
@@ -409,7 +409,7 @@ export default function App() {
               ) : (
                 <>
                   <h4 style={{ color: '#d97706', margin: '0 0 10px 0' }}>VOTI DEL GIORNO</h4>
-                  {alivePlayersList.map(p => (
+                  {alivePlayersList.sort(p => p.votes).map(p => (
                     <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
                       <span style={{ color: '#e0e0e0' }}>{p.name} <span style={{ color: '#888', fontSize: '0.85em' }}>({p.role})</span></span>
                       <span style={{ color: '#d97706', fontWeight: 'bold' }}>{p.votes || 0} Voti</span>
