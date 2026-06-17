@@ -377,7 +377,7 @@ export default function App() {
                 <History size={18} /> Storico
               </button>
               <a href={MANUALS[gameMode] || "/Regolamento WhereWolf.pdf"} target="_blank" rel="noopener noreferrer" className="btn btn-link" style={{ padding: '12px' }}>
-                <BookOpen size={18} /> Manuale ({gameMode})
+                <BookOpen size={18} /> Manuale
               </a>
               <button className="btn btn-danger" onClick={() => { resetEntireGame(); setShowMobileMenu(false); }} style={{ padding: '12px' }}>
                 <Trash2 size={18} /> Nuova Partita

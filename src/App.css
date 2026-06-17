@@ -231,6 +231,7 @@ html, body {
   flex-wrap: wrap;
   justify-content: center;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 /* Stili dei Pulsanti */
@@ -256,7 +257,7 @@ html, body {
 .btn-stop { background-color: #2f0a0a; color: #f87171; border: 1px solid #7f1d1d; }
 .btn-day { background-color: #291400; color: #fbbf24; border: 1px solid #78350f; }
 .btn-danger { background-color: #1a0505; color: #dc2626; border: 1px solid #450a0a; }
-.btn-link { background-color: #0a1429; color: #60a5fa; border: 1px solid #1e3a8a; }
+.btn-link { background-color: #0a1429; color: #60a5fa; border: 1px solid #1e3a8a; text-decoration: none; font-weight: 700;}
 .btn-secondary { background-color: #171717; color: #a3a3a3; border: 1px solid #404040; }
 .btn-night { background-color: #1e1b4b; color: #c084fc; border: 1px solid #4c1d95; }
 
