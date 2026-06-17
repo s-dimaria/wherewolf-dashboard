@@ -71,6 +71,7 @@ export default function App() {
   const [showCantilenaModal, setShowCantilenaModal] = useState(false);
   const [showFabModal, setShowFabModal] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
   const [cantilenaTab, setCantilenaTab] = useState('primaNotte');
   const [lastWinner, setLastWinner] = useState(null);
 
@@ -175,7 +176,7 @@ export default function App() {
   // ==========================================
   const createRoom = async () => {
     const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), gameStarted: false, gameMode: null });
+    await setDoc(doc(db, 'rooms', newCode), { createdAt: new Date(), gameStarted: false, gameMode: null });
     window.history.pushState({}, '', `?room=${newCode}`);
     setRoomCode(newCode);
   };
@@ -207,22 +208,13 @@ export default function App() {
   };
 
   // ==========================================
-  // LOGICA: MECCANICHE DI GIOCO
+  // LOGICA: MECCANICHE DI GIOCO E POP-UP
   // ==========================================
   const handleToggleModal = (modalType) => {
-    if (modalType === 'stato') {
-      setShowFabModal(!showFabModal);
-      setShowCantilenaModal(false);
-      setShowMobileMenu(false);
-    } else if (modalType === 'notte') {
-      setShowCantilenaModal(!showCantilenaModal);
-      setShowFabModal(false);
-      setShowMobileMenu(false);
-    } else if (modalType === 'menu') {
-      setShowMobileMenu(!showMobileMenu);
-      setShowFabModal(false);
-      setShowCantilenaModal(false);
-    }
+    setShowFabModal(modalType === 'stato' ? !showFabModal : false);
+    setShowCantilenaModal(modalType === 'notte' ? !showCantilenaModal : false);
+    setShowMobileMenu(modalType === 'menu' ? !showMobileMenu : false);
+    setShowDayModal(modalType === 'giorno' ? !showDayModal : false);
   };
 
   const handleSetGameMode = async (mode) => await setDoc(doc(db, 'rooms', roomCode), { gameMode: mode }, { merge: true });
@@ -257,18 +249,17 @@ export default function App() {
   const removePlayer = async (id) => await deleteDoc(doc(db, 'rooms', roomCode, 'players', id));
 
   const resetAllVotes = async () => {
-    if(window.confirm("Salvare lo storico e resettare tutti i voti per il nuovo Giorno?")) {
-      try {
-        const dayLog = players.filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true)).map(p => ({
-            name: p.name || 'Ignoto', role: p.role || 'Ignoto', votes: p.votes || 0, ballotVotes: p.ballotVotes || 0, isBallot: p.isBallot || false
-        }));
-        if (dayLog.length > 0) await addDoc(collection(db, 'rooms', roomCode, 'history'), { date: new Date().toISOString(), log: dayLog });
-        const batch = writeBatch(db);
-        players.forEach((p) => batch.update(doc(db, 'rooms', roomCode, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
-        await batch.commit();
-      } catch (error) {
-        alert("Errore durante il reset: " + error.message);
-      }
+    try {
+      const dayLog = players.filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true)).map(p => ({
+          name: p.name || 'Ignoto', role: p.role || 'Ignoto', votes: p.votes || 0, ballotVotes: p.ballotVotes || 0, isBallot: p.isBallot || false
+      }));
+      if (dayLog.length > 0) await addDoc(collection(db, 'rooms', roomCode, 'history'), { date: new Date().toISOString(), log: dayLog });
+      const batch = writeBatch(db);
+      players.forEach((p) => batch.update(doc(db, 'rooms', roomCode, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
+      await batch.commit();
+      setShowDayModal(false);
+    } catch (error) {
+      alert("Errore durante il reset: " + error.message);
     }
   };
 
@@ -340,12 +331,12 @@ export default function App() {
   }
 
   // ==========================================
-  // RENDER: MAIN DASHBOARD
+  // RENDER: MAIN DASHBOARD E POP-UP
   // ==========================================
   return (
     <div className="dashboard-container">
       
-      {/* --- RENDER MODALS --- */}
+      {/* POP-UP STATO TAVOLO (Mobile) */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -358,7 +349,6 @@ export default function App() {
                   <span style={{ color: '#888', fontSize: '0.9em' }}>{p.role}</span>
                 </div>
               ))}
-              
               <h4 style={{ color: '#f87171', margin: '20px 0 5px 0' }}>MORTI ({deadPlayersList.length})</h4>
               {deadPlayersList.map(p => (
                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222', opacity: 0.5 }}>
@@ -371,6 +361,7 @@ export default function App() {
         </div>
       )}
 
+      {/* POP-UP MENU HAMBURGER (Mobile) */}
       {showMobileMenu && (
         <div className="modal-overlay" onClick={() => setShowMobileMenu(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -393,6 +384,45 @@ export default function App() {
         </div>
       )}
 
+      {/* POP-UP NUOVO GIORNO (Riepilogo Voti) */}
+      {showDayModal && (
+        <div className="modal-overlay" onClick={() => setShowDayModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+            <button className="close-modal-btn" onClick={() => setShowDayModal(false)}>×</button>
+            <h2 style={{ marginTop: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px' }}>
+              <Sun size={24} /> Riepilogo Voti
+            </h2>
+            <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px', marginBottom: '20px' }}>
+              {players.some(p => p.isBallot) ? (
+                <>
+                  <h4 style={{ color: '#dc2626', margin: '0 0 10px 0' }}>BALLOTTANTI</h4>
+                  {players.filter(p => p.isBallot && p.status === 'vivo').map(p => (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
+                      <span style={{ color: '#e0e0e0' }}>{p.name} <span style={{ color: '#888', fontSize: '0.85em' }}>({p.role})</span></span>
+                      <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{p.ballotVotes || 0} Voti</span>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <h4 style={{ color: '#d97706', margin: '0 0 10px 0' }}>VOTI DEL GIORNO</h4>
+                  {alivePlayersList.map(p => (
+                    <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
+                      <span style={{ color: '#e0e0e0' }}>{p.name} <span style={{ color: '#888', fontSize: '0.85em' }}>({p.role})</span></span>
+                      <span style={{ color: '#d97706', fontWeight: 'bold' }}>{p.votes || 0} Voti</span>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <button className="btn btn-day" style={{ width: '100%', padding: '12px', fontSize: '1.1em', display: 'flex', justifyContent: 'center' }} onClick={resetAllVotes}>
+              CONFERMA E RESETTA
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* POP-UP CANTILENA */}
       {showCantilenaModal && (
         <div className="modal-overlay" onClick={() => setShowCantilenaModal(false)}>
           <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
@@ -404,7 +434,7 @@ export default function App() {
               <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} style={{ flex: 1 }} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
             </div>
             <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px' }}>
-              <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '25px' }}>
+              <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '35px' }}>
                 {CANTILENA[gameMode][cantilenaTab].map((ruolo, idx) => (
                   <li key={idx} style={{ paddingBottom: '5px', borderBottom: '1px solid #1a1a1a' }}>{ruolo}</li>
                 ))}
@@ -414,6 +444,7 @@ export default function App() {
         </div>
       )}
 
+      {/* POP-UP VITTORIA */}
       {victoryStatus && showVictoryModal && (
         <div className="modal-overlay" onClick={() => setShowVictoryModal(false)}>
           <div className="modal-content" style={{ border: `2px solid ${victoryStatus.winner === 'Villaggio' ? '#1e4d2b' : '#7f1d1d'}`, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
@@ -425,6 +456,7 @@ export default function App() {
         </div>
       )}
 
+      {/* POP-UP STORICO */}
       {showHistoryModal && (
         <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
           <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
@@ -458,33 +490,32 @@ export default function App() {
         </div>
       )}
 
-      {/* --- RENDER HEADER E CONTROLLI PRINCIPALI --- */}
+      {/* --- HEADER E CONTROLLI STICKY --- */}
+      <div className="top-controls-wrapper">
+        <div className="room-badge-container">
+          <span className="room-badge">STANZA: {roomCode}</span>
+          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
+            <DoorOpen size={18} /> ESCI
+          </button>
+        </div>
+        
+        <div className="timer-container">
+          <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+          <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
+          <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+          <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+            {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+          <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </div>
+
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
 
         <div className="button-group">
-          
-          <div className="top-controls-wrapper">
-            <div className="room-badge-container">
-              <span className="room-badge">STANZA: {roomCode}</span>
-              <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
-                <DoorOpen size={18} /> ESCI
-              </button>
-            </div>
-            
-            <div className="timer-container">
-              <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
-              <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-              <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-                {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-              </button>
-              <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
-                <RotateCcw size={16} />
-              </button>
-            </div>
-          </div>
-
           <div className="button-row desktop-only">
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
@@ -492,7 +523,7 @@ export default function App() {
             <button className="btn btn-danger" onClick={resetEntireGame} title="Svuota stanza e cancella lo storico">
               <Trash2 size={16} /> Nuova Partita
             </button>
-            <button className="btn btn-day" onClick={resetAllVotes}>
+            <button className="btn btn-day" onClick={() => setShowDayModal(true)}>
               <Sun size={16} /> Nuovo Giorno
             </button>
             <button className="btn btn-night" onClick={() => setShowCantilenaModal(true)}>
@@ -505,11 +536,10 @@ export default function App() {
               <BookOpen size={16} /> Manuale
             </a>
           </div>
-
         </div>
       </div>
 
-      {/* --- RENDER FORM INSERIMENTO --- */}
+      {/* --- FORM INSERIMENTO GIOCATORI --- */}
       {!gameStarted && (
         <div className="form-container">
           <h3 style={{ marginTop: 0, color: '#c4c4c4', display: 'flex', alignItems: 'center', gap: '8px' }}>Aggiungi Giocatori</h3>
@@ -522,6 +552,7 @@ export default function App() {
         </div>
       )}
 
+      {/* --- SUMMARY VOTI FLOTTANTE MOBILE --- */}
       {gameStarted && (
         <div className="mobile-stats">
           <div style={{ color: '#d97706', marginBottom: '5px' }}><strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}</div>
@@ -529,7 +560,7 @@ export default function App() {
         </div>
       )}
 
-      {/* --- RENDER TABELLA GIOCATORI --- */}
+      {/* --- TABELLA / CARTE GIOCATORI --- */}
       {players.length > 0 && (
         <div className="table-wrapper">
           <table className="game-table">
@@ -630,13 +661,13 @@ export default function App() {
         </div>
       )}
 
-      {/* --- RENDER BOTTOM NAV BAR (MOBILE) --- */}
+      {/* --- BOTTOM NAV BAR (MOBILE) --- */}
       <div className="bottom-nav-bar">
         <button className={`bottom-nav-item ${showFabModal ? 'active' : ''}`} onClick={() => handleToggleModal('stato')}>
           <Eye size={22} />
           <span>Stato</span>
         </button>
-        <button className="bottom-nav-item" onClick={resetAllVotes}>
+        <button className={`bottom-nav-item ${showDayModal ? 'active' : ''}`} onClick={() => handleToggleModal('giorno')}>
           <Sun size={22} />
           <span>Giorno</span>
         </button>
