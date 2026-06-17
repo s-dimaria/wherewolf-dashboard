@@ -76,10 +76,11 @@ export default function App() {
   const [lastWinner, setLastWinner] = useState(null);
 
   // ==========================================
-  // STATI: TIMER
+  // STATI: TIMER E HELPER
   // ==========================================
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const getExpirationDate = () => new Date(Date.now() + 6 * 60 * 60 * 1000);
 
   // ==========================================
   // EFFETTI: URL E CONNESSIONE DATABASE
@@ -176,7 +177,7 @@ export default function App() {
   // ==========================================
   const createRoom = async () => {
     const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    await setDoc(doc(db, 'rooms', newCode), { createdAt: new Date(), gameStarted: false, gameMode: null });
+    await setDoc(doc(db, 'rooms', newCode), { createdAt: new Date(), expiresAt: getExpirationDate(), gameStarted: false, gameMode: null });
     window.history.pushState({}, '', `?room=${newCode}`);
     setRoomCode(newCode);
   };
@@ -212,9 +213,9 @@ export default function App() {
   // ==========================================
   const handleToggleModal = (modalType) => {
     setShowFabModal(modalType === 'stato' ? !showFabModal : false);
+    setShowDayModal(modalType === 'giorno' ? !showDayModal : false);
     setShowCantilenaModal(modalType === 'notte' ? !showCantilenaModal : false);
     setShowMobileMenu(modalType === 'menu' ? !showMobileMenu : false);
-    setShowDayModal(modalType === 'giorno' ? !showDayModal : false);
   };
 
   const handleSetGameMode = async (mode) => await setDoc(doc(db, 'rooms', roomCode), { gameMode: mode }, { merge: true });
@@ -237,7 +238,8 @@ export default function App() {
     if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) return alert("Inserisci un nome e un ruolo valido!");
     await addDoc(collection(db, 'rooms', roomCode, 'players'), {
       name: masterName, role: masterRole, fazione: ROLE_DATA[masterRole].fazione,
-      status: 'vivo', notes: '', votes: 0, ballotVotes: 0, isBallot: false, createdAt: Date.now() 
+      status: 'vivo', notes: '', votes: 0, ballotVotes: 0, isBallot: false, 
+      createdAt: Date.now(), expiresAt: getExpirationDate()
     });
     setMasterName(''); setMasterRole(''); 
   };
@@ -253,7 +255,7 @@ export default function App() {
       const dayLog = players.filter(p => (p.votes || 0) > 0 || (p.ballotVotes || 0) > 0 || (p.isBallot === true)).map(p => ({
           name: p.name || 'Ignoto', role: p.role || 'Ignoto', votes: p.votes || 0, ballotVotes: p.ballotVotes || 0, isBallot: p.isBallot || false
       }));
-      if (dayLog.length > 0) await addDoc(collection(db, 'rooms', roomCode, 'history'), { date: new Date().toISOString(), log: dayLog });
+      if (dayLog.length > 0) await addDoc(collection(db, 'rooms', roomCode, 'history'), { date: new Date().toISOString(), log: dayLog, expiresAt: getExpirationDate() });
       const batch = writeBatch(db);
       players.forEach((p) => batch.update(doc(db, 'rooms', roomCode, 'players', p.id), { votes: 0, ballotVotes: 0, isBallot: false }));
       await batch.commit();
@@ -336,7 +338,7 @@ export default function App() {
   return (
     <div className="dashboard-container">
       
-      {/* POP-UP STATO TAVOLO (Mobile) */}
+      {/* POP-UP STATO TAVOLO */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -361,7 +363,7 @@ export default function App() {
         </div>
       )}
 
-      {/* POP-UP MENU HAMBURGER (Mobile) */}
+      {/* POP-UP MENU HAMBURGER */}
       {showMobileMenu && (
         <div className="modal-overlay" onClick={() => setShowMobileMenu(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -393,7 +395,7 @@ export default function App() {
               <Sun size={24} /> Riepilogo Voti
             </h2>
             <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px', marginBottom: '20px' }}>
-              {players.some(p => p.isBallot) ? (
+              {players.some(p => p.isBallot && p.status === 'vivo') ? (
                 <>
                   <h4 style={{ color: '#dc2626', margin: '0 0 10px 0' }}>BALLOTTANTI</h4>
                   {players.filter(p => p.isBallot && p.status === 'vivo').map(p => (

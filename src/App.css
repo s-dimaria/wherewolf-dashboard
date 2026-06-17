@@ -8,7 +8,7 @@ html, body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden; /* Blocca lo scroll laterale su mobile */
+  overflow-x: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -183,16 +183,6 @@ html, body {
 /* ==========================================
    5. HEADER, CONTROLLI E BOTTONI
    ========================================== */
-.top-controls-wrapper {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap; 
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 20px;
-}
-
 .header-container {
   display: flex;
   flex-direction: column;
@@ -207,6 +197,16 @@ html, body {
   height: 150px;
   object-fit: contain;
   filter: drop-shadow(0 4px 10px rgba(100,0,0,0.3));
+}
+
+.top-controls-wrapper {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap; 
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
 }
 
 .room-badge-container {
@@ -243,7 +243,6 @@ html, body {
   width: 100%;
 }
 
-/* Stili dei Pulsanti */
 .btn {
   padding: 8px 14px;
   border-radius: 4px;
@@ -270,7 +269,6 @@ html, body {
 .btn-secondary { background-color: #171717; color: #a3a3a3; border: 1px solid #404040; }
 .btn-night { background-color: #1e1b4b; color: #c084fc; border: 1px solid #4c1d95; }
 
-/* Controlli Timer */
 .timer-container {
   display: flex;
   align-items: center;
@@ -367,7 +365,6 @@ html, body {
 .row-dead { background-color: #170808; opacity: 0.6; }
 .row-ballot { background-color: #1a1205; }
 
-/* Badge Stato (Vivo/Morto) */
 .status-badge {
   display: inline-flex;
   justify-content: center;
@@ -388,7 +385,6 @@ html, body {
 .actions-wrapper { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: nowrap; }
 .ballot-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; }
 
-/* Pulsantini Piccoli Tabella (+ / - / Uccidi) */
 .action-btn {
   background: #111;
   color: #888;
@@ -406,18 +402,15 @@ html, body {
 .action-btn:hover { background: #222; color: #fff; border-color: #555; }
 .action-btn:active { transform: scale(0.95); }
 
-/* Inizialmente nascosti su Desktop */
 .mobile-stats { display: none; }
 .bottom-nav-bar { display: none; }
 
 /* ==========================================
-   8. RESPONSIVE MOBILE (CARD LAYOUT E BOTTOM BAR)
+   8. RESPONSIVE MOBILE (CARD LAYOUT E STICKY)
    ========================================== */
 @media (max-width: 768px) {
-  /* Nasconde elementi esclusivi desktop */
   .desktop-only { display: none !important; }
   
-  /* Adattamento loghi */
   .header-logo { height: 100px; margin-bottom: 5px; }
   .mode-logo { height: 100px; margin-bottom: 20px; }
   .lobby-logo { height: 100px; margin-bottom: 20px; }
@@ -432,12 +425,11 @@ html, body {
     -webkit-backdrop-filter: blur(10px);
     padding: 15px 20px;
     margin: 0 -20px 10px -20px;
-    width: calc(100% + 40px);
+    width: calc(100% + 40px); 
     border-bottom: 1px solid #222;
     box-sizing: border-box;
   }
 
-  /* Adattamento form e input */
   .add-form { flex-direction: column; align-items: stretch; }
   .add-form input, .add-form button { width: 100%; box-sizing: border-box; }
   .timer-container { justify-content: center; width: 100%; }
@@ -446,7 +438,7 @@ html, body {
   .mobile-stats { 
     display: block; 
     position: sticky;
-    top: 72px;
+    top: 73px; 
     z-index: 999;
     background: rgba(10,10,10,0.95);
     backdrop-filter: blur(10px);
@@ -461,7 +453,6 @@ html, body {
     text-align: center;
   }
 
-  /* BARRA DI NAVIGAZIONE INFERIORE (Stile iOS) */
   .bottom-nav-bar {
     display: flex;
     position: fixed;
@@ -500,12 +491,10 @@ html, body {
   .bottom-nav-item:active { transform: scale(0.95); }
   .bottom-nav-item.active { color: #f87171; }
 
-  /* Libera spazio a fine pagina per non coprire le carte con la barra */
   .dashboard-container {
     padding-bottom: calc(110px + env(safe-area-inset-bottom));
   }
 
-  /* TRASFORMAZIONE TABELLA IN "CARTE" */
   .game-table, .game-table tbody, .game-table tr, .game-table td { display: block; width: 100%; box-sizing: border-box; }
   .game-table thead, .game-table colgroup { display: none; }
   
@@ -533,7 +522,6 @@ html, body {
   }
   .game-table td:last-child { border-bottom: none; }
   
-  /* Etichette interne alle carte mobili */
   .game-table td::before {
     content: attr(data-label);
     position: absolute;
