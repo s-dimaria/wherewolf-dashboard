@@ -1,7 +1,7 @@
 // ==========================================
 // IMPORTS
 // ==========================================
-import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import {
   BookOpen, DoorOpen, Eye, Heart, History, Menu, Moon, Pause, Play, Plus, RotateCcw,
   Skull, Square, Sun, Trash2, Trophy, Users
@@ -82,6 +82,41 @@ export default function App() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
   const getExpirationDate = () => Timestamp.fromDate(new Date(Date.now() + 6 * 60 * 60 * 1000));
+
+  // ==========================================
+  // EFFETTO: SPAZZINO AUTOMATICO STANZE SCADUTE
+  // ==========================================
+  useEffect(() => {
+    const cleanupGhostRooms = async () => {
+      if (roomCode) return; // Esegue la pulizia solo se sei nella lobby
+      
+      try {
+        const roomsSnap = await getDocs(collection(db, 'rooms'));
+        roomsSnap.forEach(async (roomDoc) => {
+          const data = roomDoc.data();
+          
+          // Se esiste una data di scadenza ed è passata
+          if (data.expiresAt && data.expiresAt.toDate() < new Date()) {
+             // 1. Elimina tutti i giocatori della stanza
+             const playersSnap = await getDocs(collection(db, 'rooms', roomDoc.id, 'players'));
+             playersSnap.forEach(p => deleteDoc(doc(db, 'rooms', roomDoc.id, 'players', p.id)));
+
+             // 2. Elimina tutto lo storico
+             const historySnap = await getDocs(collection(db, 'rooms', roomDoc.id, 'history'));
+             historySnap.forEach(h => deleteDoc(doc(db, 'rooms', roomDoc.id, 'history', h.id)));
+
+             // 3. Elimina la stanza stessa
+             await deleteDoc(doc(db, 'rooms', roomDoc.id));
+             console.log(`Stanza fantasma ${roomDoc.id} eliminata.`);
+          }
+        });
+      } catch (error) {
+        console.error("Errore pulizia automatica:", error);
+      }
+    };
+
+    cleanupGhostRooms();
+  }, [roomCode]);
 
   // ==========================================
   // EFFETTI: URL E CONNESSIONE DATABASE
@@ -592,9 +627,9 @@ export default function App() {
                 <th>Mistico</th>
                 <th>Fazione & Aura</th>
                 <th>Note</th>
-                <th>Voti<br/><span style={{ color: '#d97706' }}>({totalDayVotes}/{aliveCount})</span></th>
+                <th>Voti</th>
                 <th style={{ backgroundColor: '#1a0505', borderBottom: '2px solid #450a0a', color: '#c4c4c4' }}>
-                  Ballottaggio<br/><span style={{ color: '#dc2626' }}>({totalBallotVotes}/{eligibleBallotVotersCount})</span>
+                  Ballottaggio
                 </th>
                 <th>Stato</th>
                 <th>Azioni</th>
