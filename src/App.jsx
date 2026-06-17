@@ -514,7 +514,7 @@ export default function App() {
                     <ul style={{ margin: 0, paddingLeft: '20px', lineHeight: '1.6' }}>
                       {h.log.map((logItem, idx) => (
                         <li key={idx} style={{ color: '#c4c4c4', listStyleType: 'none', padding: '5px 0', borderBottom: '1px solid #222'}}>
-                          <strong>{logItem.name} - {logItem.role}</strong> 
+                          <strong>{logItem.name} </strong><span style={{ color: '#888888'}}>({logItem.role})</span>
                           {logItem.votes > 0 && <span style={{ color: '#d97706', marginLeft: '8px' }}>• {logItem.votes} Voti</span>}
                           {logItem.isBallot && <span style={{ color: '#dc2626', marginLeft: '8px' }}>[BALLOTTAGGIO: {logItem.ballotVotes}]</span>}
                         </li>
