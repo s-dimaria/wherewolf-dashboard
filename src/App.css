@@ -301,7 +301,7 @@ html, body {
 .sticky-dashboard-bar {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  z-index: 999;
   background: rgba(5,5,5,0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
