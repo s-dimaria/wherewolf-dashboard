@@ -339,35 +339,6 @@ export default function App() {
   return (
     <div className="dashboard-container">
       
-      {/* --- CONTROLLI FLOTTANTI E STICKY --- */}
-      <div className="top-controls-wrapper">
-        <div className="room-badge-container">
-          <span className="room-badge">STANZA: {roomCode}</span>
-          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
-            <DoorOpen size={18} /> ESCI
-          </button>
-        </div>
-        
-        <div className="timer-container">
-          <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-          <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
-          <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-          <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-            {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-          </button>
-          <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
-            <RotateCcw size={16} />
-          </button>
-        </div>
-      </div>
-
-      {gameStarted && (
-        <div className="mobile-stats">
-          <div style={{ color: '#d97706', marginBottom: '5px' }}><strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}</div>
-          <div style={{ color: '#dc2626' }}><strong>Voti Ballottaggio:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}</div>
-        </div>
-      )}
-
       {/* POP-UP STATO TAVOLO */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
@@ -521,12 +492,45 @@ export default function App() {
         </div>
       )}
 
-      {/* --- HEADER DESKTOP / MOBILE --- */}
+      {/* --- HEADER E CONTROLLI STICKY --- */}
+      <div className="top-controls-wrapper">
+        <div className="room-badge-container desktop-only">
+          <span className="room-badge">STANZA: {roomCode}</span>
+          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
+            <DoorOpen size={18} /> ESCI
+          </button>
+        </div>
+        
+        {/* MOBILE STICKY BAR: Unisce Badge, Timer e Stats */}
+        <div className="mobile-sticky-bar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="room-badge" style={{ fontSize: '1em', padding: '4px 8px' }}>{roomCode}</span>
+            <div className="timer-container">
+              <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
+              <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+              <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+                {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+              </button>
+              <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+                <RotateCcw size={16} />
+              </button>
+            </div>
+          </div>
+
+          {gameStarted && (
+            <div className="mobile-stats">
+              <div style={{ color: '#d97706' }}>Voti Giorno: <strong>{totalDayVotes}/{aliveCount}</strong></div>
+              <div style={{ color: '#dc2626' }}>Voti Ballottaggio: <strong>{totalBallotVotes}/{eligibleBallotVotersCount}</strong></div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
 
         <div className="button-group">
-          
           <div className="button-row desktop-only">
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
@@ -547,7 +551,6 @@ export default function App() {
               <BookOpen size={16} /> Manuale
             </a>
           </div>
-
         </div>
       </div>
 
