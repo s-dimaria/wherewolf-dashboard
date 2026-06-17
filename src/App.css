@@ -541,4 +541,20 @@ html, body {
 
   .game-table td > input[type="text"], .game-table td > select { width: 100%; max-width: 160px; }
   .fazione-wrapper, .ballot-wrapper, .actions-wrapper { align-items: flex-end; justify-content: flex-end; }
+
+  /* ==========================================
+   9. BLOCCO ORIENTAMENTO LANDSCAPE (MOBILE)
+   ========================================== */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  #root { display: none !important; }
+  body::before {
+    content: "Ruota il dispositivo in verticale per usare l'app.";
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #050505; color: #f87171;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5em; font-weight: bold; text-align: center;
+    z-index: 9999; padding: 20px; box-sizing: border-box;
+  }
+}
 }
