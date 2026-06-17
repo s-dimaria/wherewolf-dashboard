@@ -498,7 +498,7 @@ export default function App() {
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
         <div className="room-badge-container">
           <span className="room-badge">STANZA: {roomCode}</span>
-          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
+          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: '4px'}} title="Esci">
             <DoorOpen size={18} /> ESCI
           </button>
         </div>
