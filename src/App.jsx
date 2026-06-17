@@ -1,7 +1,7 @@
 // ==========================================
 // IMPORTS
 // ==========================================
-import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
 import {
   BookOpen, DoorOpen, Eye, Heart, History, Menu, Moon, Pause, Play, Plus, RotateCcw,
   Skull, Square, Sun, Trash2, Trophy, Users
@@ -80,7 +80,8 @@ export default function App() {
   // ==========================================
   const [timerTime, setTimerTime] = useState(300);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const getExpirationDate = () => new Date(Date.now() + 6 * 60 * 60 * 1000);
+
+  const getExpirationDate = () => Timestamp.fromDate(new Date(Date.now() + 6 * 60 * 60 * 1000));
 
   // ==========================================
   // EFFETTI: URL E CONNESSIONE DATABASE
@@ -177,7 +178,7 @@ export default function App() {
   // ==========================================
   const createRoom = async () => {
     const newCode = Math.random().toString(36).substring(2, 7).toUpperCase();
-    await setDoc(doc(db, 'rooms', newCode), { createdAt: new Date(), expiresAt: getExpirationDate(), gameStarted: false, gameMode: null });
+    await setDoc(doc(db, 'rooms', newCode), { createdAt: Date.now(), expiresAt: getExpirationDate(), gameStarted: false, gameMode: null });
     window.history.pushState({}, '', `?room=${newCode}`);
     setRoomCode(newCode);
   };
@@ -338,6 +339,35 @@ export default function App() {
   return (
     <div className="dashboard-container">
       
+      {/* --- CONTROLLI FLOTTANTI E STICKY --- */}
+      <div className="top-controls-wrapper">
+        <div className="room-badge-container">
+          <span className="room-badge">STANZA: {roomCode}</span>
+          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
+            <DoorOpen size={18} /> ESCI
+          </button>
+        </div>
+        
+        <div className="timer-container">
+          <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+          <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
+          <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+          <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+            {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+          <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+            <RotateCcw size={16} />
+          </button>
+        </div>
+      </div>
+
+      {gameStarted && (
+        <div className="mobile-stats">
+          <div style={{ color: '#d97706', marginBottom: '5px' }}><strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}</div>
+          <div style={{ color: '#dc2626' }}><strong>Voti Ballottaggio:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}</div>
+        </div>
+      )}
+
       {/* POP-UP STATO TAVOLO */}
       {showFabModal && (
         <div className="modal-overlay" onClick={() => setShowFabModal(false)}>
@@ -390,7 +420,6 @@ export default function App() {
       {showDayModal && (
         <div className="modal-overlay" onClick={() => setShowDayModal(false)}>
           <div className="modal-content" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
-            <button className="close-modal-btn" onClick={() => setShowDayModal(false)}>×</button>
             <h2 style={{ marginTop: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px' }}>
               <Sun size={24} /> Riepilogo Voti
             </h2>
@@ -436,7 +465,7 @@ export default function App() {
               <button className={`btn ${cantilenaTab === 'nottiSuccessive' ? 'btn-night' : 'btn-secondary'}`} style={{ flex: 1 }} onClick={() => setCantilenaTab('nottiSuccessive')}>Notti Successive</button>
             </div>
             <div style={{ overflowY: 'auto', maxHeight: '50vh', paddingRight: '10px' }}>
-              <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '35px' }}>
+              <ol style={{ color: '#c4c4c4', lineHeight: '1.8', fontSize: '1.1em', margin: 0, paddingLeft: '45px' }}>
                 {CANTILENA[gameMode][cantilenaTab].map((ruolo, idx) => (
                   <li key={idx} style={{ paddingBottom: '5px', borderBottom: '1px solid #1a1a1a' }}>{ruolo}</li>
                 ))}
@@ -492,32 +521,12 @@ export default function App() {
         </div>
       )}
 
-      {/* --- HEADER E CONTROLLI STICKY --- */}
-      <div className="top-controls-wrapper">
-        <div className="room-badge-container">
-          <span className="room-badge">STANZA: {roomCode}</span>
-          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
-            <DoorOpen size={18} /> ESCI
-          </button>
-        </div>
-        
-        <div className="timer-container">
-          <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-          <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
-          <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-          <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-            {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-          </button>
-          <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
-            <RotateCcw size={16} />
-          </button>
-        </div>
-      </div>
-
+      {/* --- HEADER DESKTOP / MOBILE --- */}
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
 
         <div className="button-group">
+          
           <div className="button-row desktop-only">
             <button className={`btn ${gameStarted ? 'btn-stop' : 'btn-start'}`} onClick={toggleGameStarted}>
               {gameStarted ? <><Square size={16} /> Ferma Partita</> : <><Play size={16} /> Avvia Partita</>}
@@ -538,6 +547,7 @@ export default function App() {
               <BookOpen size={16} /> Manuale
             </a>
           </div>
+
         </div>
       </div>
 
@@ -551,14 +561,6 @@ export default function App() {
             <datalist id="role-suggestions">{sortedRoles.map(r => <option key={r} value={r} />)}</datalist>
             <button type="submit" className="btn btn-secondary" style={{ color: '#fff' }}><Plus size={16} /> Aggiungi</button>
           </form>
-        </div>
-      )}
-
-      {/* --- SUMMARY VOTI FLOTTANTE MOBILE --- */}
-      {gameStarted && (
-        <div className="mobile-stats">
-          <div style={{ color: '#d97706', marginBottom: '5px' }}><strong>Voti Giorno:</strong> {totalDayVotes}/{aliveCount}</div>
-          <div style={{ color: '#dc2626' }}><strong>Voti Ballottaggio:</strong> {totalBallotVotes}/{eligibleBallotVotersCount}</div>
         </div>
       )}
 

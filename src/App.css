@@ -8,7 +8,7 @@ html, body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -258,6 +258,7 @@ html, body {
   gap: 6px;
   box-shadow: 0 4px 6px rgba(0,0,0,0.5);
 }
+
 .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.8); filter: brightness(1.2); }
 .btn:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
@@ -327,6 +328,9 @@ html, body {
 /* ==========================================
    7. TABELLA GIOCATORI (LAYOUT DESKTOP)
    ========================================== */
+.mobile-stats { display: none; }
+.bottom-nav-bar { display: none; }
+
 .table-wrapper {
   background: #0a0a0a;
   border-radius: 8px;
@@ -402,9 +406,6 @@ html, body {
 .action-btn:hover { background: #222; color: #fff; border-color: #555; }
 .action-btn:active { transform: scale(0.95); }
 
-.mobile-stats { display: none; }
-.bottom-nav-bar { display: none; }
-
 /* ==========================================
    8. RESPONSIVE MOBILE (CARD LAYOUT E STICKY)
    ========================================== */
@@ -415,7 +416,6 @@ html, body {
   .mode-logo { height: 100px; margin-bottom: 20px; }
   .lobby-logo { height: 100px; margin-bottom: 20px; }
 
-  /* FIX: Wrapper flottante Header su Mobile */
   .top-controls-wrapper {
     position: sticky;
     top: 0;
@@ -424,8 +424,8 @@ html, body {
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 15px 20px;
-    margin: 0 -20px 10px -20px;
-    width: calc(100% + 40px); 
+    margin: -20px -20px 15px -20px;
+    width: calc(100% + 40px);
     border-bottom: 1px solid #222;
     box-sizing: border-box;
   }
@@ -434,11 +434,10 @@ html, body {
   .add-form input, .add-form button { width: 100%; box-sizing: border-box; }
   .timer-container { justify-content: center; width: 100%; }
   
-  /* FIX: Voti Flottanti su Mobile */
   .mobile-stats { 
     display: block; 
     position: sticky;
-    top: 73px; 
+    top: 65px;
     z-index: 999;
     background: rgba(10,10,10,0.95);
     backdrop-filter: blur(10px);
