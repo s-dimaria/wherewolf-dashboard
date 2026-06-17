@@ -391,6 +391,7 @@ export default function App() {
       {showDayModal && (
         <div className="modal-overlay" onClick={() => setShowDayModal(false)}>
           <div className="modal-content" style={{ maxWidth: '500px' }} onClick={e => e.stopPropagation()}>
+            <button className="close-modal-btn" onClick={() => setShowDayModal(false)}>×</button>
             <h2 style={{ marginTop: 0, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #333', paddingBottom: '15px', marginBottom: '20px' }}>
               <Sun size={24} /> Riepilogo Voti
             </h2>
@@ -495,8 +496,7 @@ export default function App() {
       {/* --- HEADER E LOGO --- */}
       <div className="header-container">
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
-
-        <div className="room-info-row">
+        <div className="room-badge-container">
           <span className="room-badge">STANZA: {roomCode}</span>
           <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase' }} title="Esci e Distruggi">
             <DoorOpen size={18} /> ESCI
@@ -504,27 +504,34 @@ export default function App() {
         </div>
       </div>
 
-      {/* --- BARRA STICKY (TIMER E VOTI) --- */}
-      <div className="sticky-dashboard-bar">
-        <div className="timer-container">
-          <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
-          <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
-          <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
-          <button className="timer-btn" style={{ marginLeft: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
-            {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
-          </button>
-          <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
-            <RotateCcw size={16} />
-          </button>
-        </div>
-
-        {gameStarted && (
-          <div className="sticky-stats">
-            <div style={{ color: '#d97706' }}>Voti Giorno: <strong>{totalDayVotes}/{aliveCount}</strong></div>
-            <div style={{ color: '#dc2626' }}>Ballottaggio: <strong>{totalBallotVotes}/{eligibleBallotVotersCount}</strong></div>
+      {/* --- BARRA STICKY (TIMER E VOTI) SOLO IN PARTITA --- */}
+      {gameStarted && (
+        <div className="sticky-dashboard-bar">
+          <div className="timer-wrapper">
+            <div className="timer-row">
+              <button className="timer-btn" onClick={() => adjustTimer(-60)}>-1m</button>
+              <div className="timer-display" style={{ color: timerTime <= 10 && isTimerRunning ? '#f87171' : '#c4c4c4' }}>{formatTime(timerTime)}</div>
+              <button className="timer-btn" onClick={() => adjustTimer(60)}>+1m</button>
+            </div>
+            <div className="timer-row">
+              <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4px 0' }} onClick={() => setIsTimerRunning(!isTimerRunning)}>
+                {isTimerRunning ? <Pause size={16} /> : <Play size={16} />}
+              </button>
+              <button className="timer-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, padding: '4px 0' }} onClick={() => { setIsTimerRunning(false); setTimerTime(300); }}>
+                <RotateCcw size={16} />
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="sticky-stats">
+            {players.some(p => p.isBallot && p.status === 'vivo') ? (
+              <div style={{ color: '#dc2626' }}>Voti Ballottaggio<br/><strong>{totalBallotVotes} / {eligibleBallotVotersCount}</strong></div>
+            ) : (
+              <div style={{ color: '#d97706' }}>Voti Giorno<br/><strong>{totalDayVotes} / {aliveCount}</strong></div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* --- CONTROLLI DESKTOP --- */}
       <div className="desktop-controls desktop-only">
