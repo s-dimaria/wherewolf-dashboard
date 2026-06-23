@@ -387,14 +387,20 @@ export default function App() {
               <h4 style={{ color: '#4ade80', margin: '10px 0 5px 0' }}>VIVI ({alivePlayersList.length})</h4>
               {alivePlayersList.map((p, i) => (
                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222' }}>
-                  <span style={{ color: '#e0e0e0' }}><strong>{i + 1}.</strong> {p.name}</span>
+                  <span style={{ color: '#e0e0e0' }}>
+                    <strong>{i + 1}.</strong> {p.name}
+                    {p.notes && <span style={{ color: '#f5ce6c', fontStyle: 'italic', fontSize: '0.85em', marginLeft: '8px' }}>- {p.notes}</span>}
+                  </span>
                   <span style={{ color: '#888', fontSize: '0.9em' }}>{p.role}</span>
                 </div>
               ))}
               <h4 style={{ color: '#f87171', margin: '20px 0 5px 0' }}>MORTI ({deadPlayersList.length})</h4>
               {deadPlayersList.map(p => (
                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #222', opacity: 0.5 }}>
-                  <span style={{ color: '#f87171', textDecoration: 'line-through' }}>{p.name}</span>
+                  <span>
+                    <span style={{ color: '#f87171', textDecoration: 'line-through' }}>{p.name}</span>
+                    {p.notes && <span style={{ color: '#f5ce6c', fontStyle: 'italic', fontSize: '0.85em', marginLeft: '8px' }}>- {p.notes}</span>}
+                  </span>
                   <span style={{ color: '#888', fontSize: '0.9em' }}>{p.role}</span>
                 </div>
               ))}
@@ -537,7 +543,7 @@ export default function App() {
         <img src="/logo.png?v=3" alt="Wherewolf" className="header-logo" />
         <div className="room-badge-container">
           <span className="room-badge">STANZA: {roomCode}</span>
-          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: '4px'}} title="Esci">
+          <button className="action-btn" onClick={exitRoom} style={{ backgroundColor: '#1a0505', borderColor: '#450a0a', color: '#f87171', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 'bold', textTransform: 'uppercase', borderRadius: '8px'}} title="Esci">
             <DoorOpen size={18} /> ESCI
           </button>
         </div>
