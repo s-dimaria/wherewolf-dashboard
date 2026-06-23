@@ -142,7 +142,11 @@ export default function App() {
     const playersRef = collection(db, 'rooms', roomCode, 'players');
     const unsubPlayers = onSnapshot(playersRef, (snapshot) => {
       const playersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setPlayers(playersData.sort((a, b) => a.createdAt - b.createdAt));
+      setPlayers(playersData.sort((a, b) => {
+        if (a.status === 'vivo' && b.status === 'morto') return -1;
+        if (a.status === 'morto' && b.status === 'vivo') return 1;
+        return a.createdAt - b.createdAt;
+      }));
     });
 
     const historyRef = collection(db, 'rooms', roomCode, 'history');
@@ -273,7 +277,7 @@ export default function App() {
     e.preventDefault();
     if (!masterName.trim() || !masterRole || !ROLE_DATA[masterRole]) return alert("Inserisci un nome e un ruolo valido!");
     await addDoc(collection(db, 'rooms', roomCode, 'players'), {
-      name: masterName, role: masterRole, fazione: ROLE_DATA[masterRole].fazione,
+      name: masterName.trim().toUpperCase(), role: masterRole, fazione: ROLE_DATA[masterRole].fazione,
       status: 'vivo', notes: '', votes: 0, ballotVotes: 0, isBallot: false, 
       createdAt: Date.now(), expiresAt: getExpirationDate()
     });

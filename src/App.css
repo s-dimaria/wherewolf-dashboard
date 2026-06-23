@@ -13,8 +13,7 @@ html, body {
 }
 
 .dashboard-container {
-  padding: 20px;
-  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)) 20px;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
@@ -537,6 +536,19 @@ html, body {
     color: #666;
     font-size: 0.8em;
     text-transform: uppercase;
+  }
+
+  .game-table td[data-label="Nome"] {
+    background-color: #1a0505;
+    border-bottom: 1px solid #450a0a;
+    color: #f87171 !important;
+  }
+  .game-table td[data-label="Nome"]::before {
+    color: #f87171;
+  }
+
+  .row-dead td:not([data-label="Nome"]):not([data-label="Ruolo"]):not([data-label="Stato"]):not([data-label="Azioni"]) {
+    display: none !important;
   }
 
   .game-table td > input[type="text"], .game-table td > select { width: 100%; max-width: 160px; }
