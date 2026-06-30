@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import './App.css';
 import { db } from './firebase';
 import { ROLE_DATA } from './roles';
+import PlayerCard from './PlayerCard';
 
 // ==========================================
 // COSTANTI E CONFIGURAZIONI GIOCO
@@ -615,47 +616,69 @@ export default function App() {
         </div>
       )}
 
-      {/* --- TABELLA / CARTE GIOCATORI --- */}
+      {/* --- PLAYERS --- */}
       {players.length > 0 && (
-        <div className="table-wrapper">
-          <table className="game-table">
-            <colgroup>
-              <col style={{ width: '11%' }} /> 
-              <col style={{ width: '12%' }} /> 
-              <col style={{ width: '9%' }} />  
-              <col style={{ width: '13%' }} /> 
-              <col style={{ width: '13%' }} /> 
-              <col style={{ width: '11%' }} /> 
-              <col style={{ width: '14%' }} /> 
-              <col style={{ width: '9%' }} />  
-              <col style={{ width: '8%' }} /> 
-            </colgroup>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left' }}>Nome</th>
-                <th>Ruolo</th>
-                <th>Mistico</th>
-                <th>Fazione & Aura</th>
-                <th>Note</th>
-                <th>Voti</th>
-                <th style={{ backgroundColor: '#1a0505', borderBottom: '2px solid #450a0a', color: '#c4c4c4' }}>
-                  Ballottaggio
-                </th>
-                <th>Stato</th>
-                <th>Azioni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((p) => {
-                const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
-                const isDead = p.status === 'morto';
-                let currentAura = roleInfo.aura;
-                if (p.fazione === "Vampiro") currentAura = "Oscura";
-                if (p.fazione === "Lupi del Branco" && roleInfo.fazione !== "Lupi del Branco") currentAura = "Oscura";
-                const rowClass = isDead ? 'row-dead animated-row' : p.isBallot ? 'row-ballot animated-row' : 'row-alive animated-row';
-                
-                return (
-                  <tr key={p.id} className={rowClass}>
+        <>
+          {/* Desktop */}
+          <div className="table-wrapper">
+            <table className="game-table">
+              <colgroup>
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '8%' }} />
+              </colgroup>
+
+              <thead>
+                <tr>
+                  <th style={{ textAlign: "left" }}>Nome</th>
+                  <th>Ruolo</th>
+                  <th>Mistico</th>
+                  <th>Fazione & Aura</th>
+                  <th>Note</th>
+                  <th>Voti</th>
+                  <th
+                    style={{
+                      backgroundColor: "#1a0505",
+                      borderBottom: "2px solid #450a0a",
+                      color: "#c4c4c4",
+                    }}
+                  >
+                    Ballottaggio
+                  </th>
+                  <th>Stato</th>
+                  <th>Azioni</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {players.map((p) => {
+                  const roleInfo = ROLE_DATA[p.role] || { aura: "?" };
+                  const isDead = p.status === "morto";
+
+                  let currentAura = roleInfo.aura;
+
+                  if (p.fazione === "Vampiro") currentAura = "Oscura";
+
+                  if (
+                    p.fazione === "Lupi del Branco" &&
+                    roleInfo.fazione !== "Lupi del Branco"
+                  )
+                    currentAura = "Oscura";
+
+                  const rowClass = isDead
+                    ? "row-dead animated-row"
+                    : p.isBallot
+                    ? "row-ballot animated-row"
+                    : "row-alive animated-row";
+
+                  return (
+                    <tr key={p.id} className={rowClass}>
                     <td data-label="Nome" style={{ textAlign: 'left', fontWeight: 'bold', fontSize: '1.1em', color: '#e0e0e0' }}>{p.name}</td>
                     <td data-label="Ruolo">{p.role}</td>
                     <td data-label="Mistico" style={{ fontWeight: 'bold', color: roleInfo.misticismo === 'Sì' ? '#9333ea' : '#555' }}>{roleInfo.misticismo || 'No'}</td>
@@ -708,12 +731,31 @@ export default function App() {
                         )}
                       </div>
                     </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile */}
+          <div className="mobile-player-list">
+            {players.map((p) => (
+              <PlayerCard
+                key={p.id}
+                player={p}
+                roleInfo={ROLE_DATA[p.role] || {}}
+                gameStarted={gameStarted}
+                FAZIONI_POSSIBILI={FAZIONI_POSSIBILI}
+                updateField={updateField}
+                incrementVote={incrementVote}
+                decrementVote={decrementVote}
+                toggleStatus={toggleStatus}
+                removePlayer={removePlayer}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* --- BOTTOM NAV BAR (MOBILE) --- */}
